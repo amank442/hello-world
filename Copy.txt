@@ -1,0 +1,151 @@
+Daily Learning Report
+
+Date: 18th April 2025
+Name: Aman Kumar
+Learning Track: DevOps – Jenkins Fundamentals
+Topic Covered: Creating a Freestyle Job in Jenkins
+
+
+---
+
+1. Objective of the Day
+
+To learn how to create, configure, and run a Freestyle job in Jenkins to automate simple tasks like build, test, and deploy.
+
+
+---
+
+2. Topics Covered in Detail
+
+A. What is a Freestyle Job?
+
+A Freestyle Job is a simple, flexible project type in Jenkins.
+
+It allows developers to configure and automate different tasks such as building code, running tests, or deploying applications without writing a lot of scripts.
+
+Ideal for basic CI/CD pipelines or single-step tasks.
+
+
+
+---
+
+B. Steps to Create a Freestyle Job in Jenkins
+
+1. Login to Jenkins Dashboard
+
+Open Jenkins in your browser.
+
+
+
+2. Create a New Job
+
+Click on “New Item”.
+
+Enter a project name (e.g., First-Freestyle-Job).
+
+Select “Freestyle project” and click OK.
+
+
+
+3. Configure Job
+
+Description: Write what the job will do.
+
+Source Code Management (SCM): If code is stored in Git, configure the repository URL.
+
+Build Triggers: Set conditions like "Build periodically" or "Build when a change is pushed to GitHub."
+
+Build Steps: Add steps like:
+
+Execute shell script
+
+Execute Windows batch command
+
+Invoke Maven/Gradle if needed
+
+
+
+
+4. Example Shell Command
+
+echo "Hello, Jenkins!"
+
+
+5. Post-build Actions
+
+Actions after build like sending email notifications, archiving artifacts, publishing test reports, etc.
+
+
+
+6. Save and Build
+
+Click on Save.
+
+Click Build Now to run the job.
+
+Monitor output through Console Output.
+
+
+
+
+
+---
+
+C. Common Build Steps
+
+
+---
+
+3. Activities Done
+
+Installed and launched Jenkins on localhost
+
+Created a basic Freestyle job to print "Hello, Jenkins!"
+
+Configured a job to clone a GitHub repo and display the README
+
+Tested manual and triggered builds
+
+Analyzed console output for successful build execution
+
+
+
+---
+
+4. Challenges Faced
+
+Faced initial permission issues while Jenkins tried to pull GitHub code — resolved by setting credentials.
+
+Forgot to configure build triggers properly during first try.
+
+Misunderstood "Build Periodically" cron syntax — revised with examples.
+
+
+
+---
+
+5. Learnings & Takeaways
+
+Freestyle jobs are good for quick automation without pipelines.
+
+SCM configuration and build steps are critical parts of job setup.
+
+Console Output is very helpful in debugging build failures.
+
+Job configurations can be cloned to create multiple similar jobs quickly.
+
+
+
+---
+
+6. Plan for Next Day
+
+Learn:
+
+Introduction to Pipeline Jobs in Jenkins (Declarative vs Scripted Pipelines)
+
+How to write basic Jenkinsfile
+
+Pipeline as Code practice
+
+
