@@ -1,112 +1,135 @@
 Daily Learning Report
 
-Date: 18th April 2025
+Date: 19th April 2025
 Name: Aman Kumar
-Learning Track: DevOps – Jenkins Fundamentals
-Topic Covered: Creating a Freestyle Job in Jenkins
+Learning Track: DevOps – Jenkins Pipelines
+Topic Covered: Creating a Declarative Pipeline
 
 
 ---
 
 1. Objective of the Day
 
-To learn how to create, configure, and run a Freestyle job in Jenkins to automate simple tasks like build, test, and deploy.
+To understand and create a Declarative Pipeline in Jenkins using a simple, structured syntax for defining the stages and steps of an automated build process.
 
 
 ---
 
 2. Topics Covered in Detail
 
-A. What is a Freestyle Job?
+A. What is a Declarative Pipeline?
 
-A Freestyle Job is a simple, flexible project type in Jenkins.
+A Declarative Pipeline provides a structured and simpler syntax for defining Jenkins Pipelines.
 
-It allows developers to configure and automate different tasks such as building code, running tests, or deploying applications without writing a lot of scripts.
+It is defined in a Jenkinsfile (typically stored inside the source code repo).
 
-Ideal for basic CI/CD pipelines or single-step tasks.
+Designed to make pipeline code more readable and manageable.
 
 
 
 ---
 
-B. Steps to Create a Freestyle Job in Jenkins
+B. Basic Structure of a Declarative Pipeline
 
-1. Login to Jenkins Dashboard
+pipeline {
+    agent any
 
-Open Jenkins in your browser.
-
-
-
-2. Create a New Job
-
-Click on “New Item”.
-
-Enter a project name (e.g., First-Freestyle-Job).
-
-Select “Freestyle project” and click OK.
-
-
-
-3. Configure Job
-
-Description: Write what the job will do.
-
-Source Code Management (SCM): If code is stored in Git, configure the repository URL.
-
-Build Triggers: Set conditions like "Build periodically" or "Build when a change is pushed to GitHub."
-
-Build Steps: Add steps like:
-
-Execute shell script
-
-Execute Windows batch command
-
-Invoke Maven/Gradle if needed
+    stages {
+        stage('Build') {
+            steps {
+                echo 'Building...'
+            }
+        }
+        stage('Test') {
+            steps {
+                echo 'Testing...'
+            }
+        }
+        stage('Deploy') {
+            steps {
+                echo 'Deploying...'
+            }
+        }
+    }
+}
 
 
+---
+
+C. Key Components
 
 
-4. Example Shell Command
+---
 
-echo "Hello, Jenkins!"
+D. How to Create a Declarative Pipeline Job
 
-
-5. Post-build Actions
-
-Actions after build like sending email notifications, archiving artifacts, publishing test reports, etc.
+1. Login to Jenkins Dashboard.
 
 
+2. Create New Item → Pipeline → Enter Job Name → OK.
 
-6. Save and Build
 
-Click on Save.
+3. Pipeline Configuration:
 
-Click Build Now to run the job.
+In the Pipeline section, choose Pipeline script.
 
-Monitor output through Console Output.
+Paste the Declarative syntax (as shown above).
 
+
+
+4. Save and Build Now.
+
+
+5. Check Console Output to see logs from each stage.
 
 
 
 
 ---
 
-C. Common Build Steps
+E. Example: Clone and Build Example
+
+pipeline {
+    agent any
+
+    stages {
+        stage('Checkout') {
+            steps {
+                git 'https://github.com/amankumar/project-repo.git'
+            }
+        }
+        stage('Build') {
+            steps {
+                sh 'npm install'
+            }
+        }
+        stage('Test') {
+            steps {
+                sh 'npm test'
+            }
+        }
+    }
+}
+
+Checkout: Pulls the repo from GitHub.
+
+Build: Installs npm dependencies.
+
+Test: Runs unit tests.
+
 
 
 ---
 
 3. Activities Done
 
-Installed and launched Jenkins on localhost
+Created a new Jenkins Pipeline job.
 
-Created a basic Freestyle job to print "Hello, Jenkins!"
+Wrote a basic Declarative Pipeline to print messages.
 
-Configured a job to clone a GitHub repo and display the README
+Added a real Git checkout and build stage.
 
-Tested manual and triggered builds
-
-Analyzed console output for successful build execution
+Experimented with different agent types (any, specific label).
 
 
 
@@ -114,11 +137,11 @@ Analyzed console output for successful build execution
 
 4. Challenges Faced
 
-Faced initial permission issues while Jenkins tried to pull GitHub code — resolved by setting credentials.
+Forgot to enclose pipeline {} properly at first, causing syntax errors.
 
-Forgot to configure build triggers properly during first try.
+Misplaced steps {} inside stages directly — corrected after checking documentation.
 
-Misunderstood "Build Periodically" cron syntax — revised with examples.
+Minor issues with Git credentials when pulling private repos — learned to configure Jenkins Credentials.
 
 
 
@@ -126,26 +149,8 @@ Misunderstood "Build Periodically" cron syntax — revised with examples.
 
 5. Learnings & Takeaways
 
-Freestyle jobs are good for quick automation without pipelines.
+Declarative syntax is very organized and beginner-friendly compared to scripted pipelines.
 
-SCM configuration and build steps are critical parts of job setup.
+Pipelines encourage Infrastructure as Code (IaC) — no more manual clicking.
 
-Console Output is very helpful in debugging build failures.
-
-Job configurations can be cloned to create multiple similar jobs quickly.
-
-
-
----
-
-6. Plan for Next Day
-
-Learn:
-
-Introduction to Pipeline Jobs in Jenkins (Declarative vs Scripted Pipelines)
-
-How to write basic Jenkinsfile
-
-Pipeline as Code practice
-
-
+Validation and indentation are crucial to avoid pipeline failures.
