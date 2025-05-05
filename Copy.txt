@@ -1,124 +1,115 @@
-Here’s your Daily Learning Report for today’s theoretical learning on Persistent Volumes (PV), Persistent Volume Claims (PVC), and Ingress in Kubernetes:
+Here’s your updated and detailed Daily Learning Report with Cloud Basics, Types of Cloud, and Cloud Service Models, along with Azure-specific infrastructure concepts:
 
 
 ---
 
 Daily Learning Report
 
-Date: 23rd April 2025
+Date: 24th April 2025
 Name: Aman Kumar
-Learning Track: DevOps – Kubernetes Fundamentals
-Topic Covered: PV, PVC, and Ingress in Kubernetes
+Learning Track: DevOps – Azure Cloud Fundamentals
+Topics Covered: Cloud Basics, Cloud Types, Cloud Service Models, Azure Datacenters, and Availability Zones
 
 
 ---
 
 1. Objective of the Day
 
-To understand how Kubernetes handles persistent storage using PV and PVC and how Ingress manages external access to services using HTTP/HTTPS routing.
+To understand the fundamentals of cloud computing, types of cloud deployment, service models, and how Microsoft Azure structures its global infrastructure for high availability and scalability.
 
 
 ---
 
 2. Topics Covered
 
-A. Persistent Volumes (PV) and Persistent Volume Claims (PVC)
+A. What is Cloud Computing?
 
-What is a PV (Persistent Volume)?
+Cloud computing delivers computing services (like servers, storage, databases, networking, software) over the internet.
 
-A cluster-level storage resource provisioned by an admin (or dynamically).
+Offers flexibility, cost efficiency, and scalability without owning physical hardware.
 
-Abstracts the underlying storage (local, NFS, cloud).
-
-
-What is a PVC (Persistent Volume Claim)?
-
-A request for storage by a user/application.
-
-Specifies required size, access mode, and storage class.
-
-
-Lifecycle
-
-1. Admin or dynamic provisioner creates a PV.
-
-
-2. Developer creates a PVC requesting storage.
-
-
-3. Kubernetes binds a suitable PV to the PVC.
-
-
-4. PVC is used by Pods to mount the volume and store data.
-
-
-
-Sample PVC YAML
-
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: my-pvc
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 1Gi
 
 
 ---
 
-B. Ingress
-
-What is Ingress?
-
-A Kubernetes object that manages external access to services via HTTP/HTTPS.
-
-Provides routing, SSL termination, and virtual hosting.
+B. Types of Cloud Deployment
 
 
-Ingress vs Service
+---
 
-Service (NodePort/LoadBalancer) exposes at a single IP/port.
-
-Ingress exposes multiple services using URL paths or hostnames on a single IP.
+C. Cloud Service Models
 
 
-Ingress Controller
+---
 
-A separate Pod that processes Ingress rules.
+D. What is Microsoft Azure?
 
-Examples: NGINX Ingress, Traefik, HAProxy.
+Microsoft Azure is a cloud computing platform offering over 200 products and services for:
+
+Compute, Networking, Storage
+
+Machine Learning, DevOps, Containers
+
+Identity, Databases, IoT, and Security
 
 
-Basic Ingress YAML
 
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: my-ingress
-spec:
-  rules:
-    - host: myapp.local
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: my-service
-                port:
-                  number: 80
+
+---
+
+E. Azure Datacenters and Infrastructure
+
+Datacenters
+
+Azure has a global network of datacenters hosting its cloud infrastructure.
+
+Each region consists of one or more datacenters, with high security and disaster recovery protocols.
+
+
+Regions
+
+A region is a set of datacenters deployed within a specific geographical area.
+
+Azure has 60+ regions worldwide.
+
+
+
+---
+
+F. Availability Zones (AZs)
+
+What is an Availability Zone?
+
+An Availability Zone is a physically separate datacenter within an Azure region.
+
+Designed for high availability and fault tolerance.
+
+
+Purpose of AZs
+
+Protect against hardware, software, and power failures.
+
+Ensure 99.99% availability when apps are distributed across zones.
+
+
+
+---
+
+G. Summary Table
 
 
 ---
 
 3. Activities Done
 
-Studied theoretical aspects of PV, PVC, and Ingress.
+Theoretical study of:
 
-Reviewed Kubernetes docs and architecture diagrams for persistent storage and ingress flow.
+Cloud types and service models
+
+Azure’s infrastructure and high availability mechanisms
+
+
+Referred to Microsoft Learn, official documentation, and visual guides.
 
 
 
@@ -126,11 +117,11 @@ Reviewed Kubernetes docs and architecture diagrams for persistent storage and in
 
 4. Learnings & Takeaways
 
-PV/PVC separate storage provisioning from application logic.
+Cloud adoption reduces cost and improves agility.
 
-PVC makes it easy to request and consume storage in a declarative way.
+Choosing the right service model (IaaS/PaaS/SaaS) depends on project needs.
 
-Ingress helps consolidate multiple service exposures behind a single domain or IP, improving efficiency and scalability.
+Azure’s availability zones play a crucial role in building resilient applications.
 
 
 
@@ -138,16 +129,15 @@ Ingress helps consolidate multiple service exposures behind a single domain or I
 
 5. Plan for Next Day
 
-Perform hands-on tasks:
+Explore the Azure Portal.
 
-Create a PVC and mount it in a Pod.
+Deploy a basic IaaS resource (Virtual Machine).
 
-Deploy an Ingress controller and configure Ingress rules for routing.
-
+Understand region selection and service configuration.
 
 
 
 ---
 
-Would you like a diagram or practice checklist to help visualize PV/PVC and Ingress flows before trying hands-on?
+Would you like a diagram of the cloud deployment models and service models next to visualize this structure easily?
 
