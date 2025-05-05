@@ -1,407 +1,165 @@
-7Daily Learning Report
-
-Date: 19th April 2025
-Name: Aman Kumar
-Learning Track: DevOps – Jenkins Pipelines
-Topic Covered: Creating a Declarative Pipeline
-
-
----
-
-1. Objective of the Day
-
-To understand and create a Declarative Pipeline in Jenkins using a simple, structured syntax for defining the stages and steps of an automated build process.
-
-
----
-
-2. Topics Covered in Detail
-
-A. What is a Declarative Pipeline?
-
-A Declarative Pipeline provides a structured and simpler syntax for defining Jenkins Pipelines.
-
-It is defined in a Jenkinsfile (typically stored inside the source code repo).
-
-Designed to make pipeline code more readable and manageable.
-
-
-
----
-
-B. Basic Structure of a Declarative Pipeline
-
-pipeline {
-    agent any
-
-    stages {
-        stage('Build') {
-            steps {
-                echo 'Building...'
-            }
-        }
-        stage('Test') {
-            steps {
-                echo 'Testing...'
-            }
-        }
-        stage('Deploy') {
-            steps {
-                echo 'Deploying...'
-            }
-        }
-    }
-}
-
-
----
-
-C. Key Components
-
-
----
-
-D. How to Create a Declarative Pipeline Job
-
-1. Login to Jenkins Dashboard.
-
-
-2. Create New Item → Pipeline → Enter Job Name → OK.
-
-
-3. Pipeline Configuration:
-
-In the Pipeline section, choose Pipeline script.
-
-Paste the Declarative syntax (as shown above).
-
-
-
-4. Save and Build Now.
-
-
-5. Check Console Output to see logs from each stage.
-
-
-
-
----
-Here’s your Daily Learning Report for Creating a Declarative Pipeline (for 19th April 2025):
+Here’s your Daily Learning Report for ConfigMap and Secret in Kubernetes (theoretical learning):
 
 
 ---
 
 Daily Learning Report
 
-Date: 19th April 2025
+Date: 21st April 2025
 Name: Aman Kumar
-Learning Track: DevOps – Jenkins Pipelines
-Topic Covered: Creating a Declarative Pipeline
+Learning Track: DevOps – Kubernetes Fundamentals
+Topic Covered: ConfigMap and Secret in Kubernetes
 
 
 ---
 
 1. Objective of the Day
 
-To understand and create a Declarative Pipeline in Jenkins using a simple, structured syntax for defining the stages and steps of an automated build process.
+To understand how ConfigMap and Secret objects are used in Kubernetes to externalize configuration data and secure sensitive information, keeping applications flexible and secure.
 
 
 ---
 
-2. Topics Covered in Detail
+2. Topics Covered
 
-A. What is a Declarative Pipeline?
+A. What is a ConfigMap?
 
-A Declarative Pipeline provides a structured and simpler syntax for defining Jenkins Pipelines.
+A ConfigMap is a Kubernetes object used to store non-sensitive configuration data (key-value pairs).
 
-It is defined in a Jenkinsfile (typically stored inside the source code repo).
+Helps keep configuration separate from container images.
 
-Designed to make pipeline code more readable and manageable.
+Used for:
+
+Environment variables
+
+Command-line arguments
+
+Configuration files mounted inside Pods
 
 
 
----
-
-B. Basic Structure of a Declarative Pipeline
-
-pipeline {
-    agent any
-
-    stages {
-        stage('Build') {
-            steps {
-                echo 'Building...'
-            }
-        }
-        stage('Test') {
-            steps {
-                echo 'Testing...'
-            }
-        }
-        stage('Deploy') {
-            steps {
-                echo 'Deploying...'
-            }
-        }
-    }
-}
+Example use case:
+Defining a database host or environment name (ENV=dev) outside the image.
 
 
 ---
 
-C. Key Components
+B. Key Features of ConfigMap
 
+Can be created using a file, literal values, or YAML.
 
----
+Can be injected:
 
-D. How to Create a Declarative Pipeline Job
+As environment variables
 
-1. Login to Jenkins Dashboard.
+As files inside a volume
 
-
-2. Create New Item → Pipeline → Enter Job Name → OK.
-
-
-3. Pipeline Configuration:
-
-In the Pipeline section, choose Pipeline script.
-
-Paste the Declarative syntax (as shown above).
-
-
-
-4. Save and Build Now.
-
-
-5. Check Console Output to see logs from each stage.
+Directly inside the container's command
 
 
 
 
 ---
 
-E. Example: Clone and Build Example
+C. What is a Secret?
 
-pipeline {
-    agent any
+A Secret is used to store sensitive data like:
 
-    stages {
-        stage('Checkout') {
-            steps {
-                git 'https://github.com/amankumar/project-repo.git'
-            }
-        }
-        stage('Build') {
-            steps {
-                sh 'npm install'
-            }
-        }
-        stage('Test') {
-            steps {
-                sh 'npm test'
-            }
-        }
-    }
-}
+Passwords
 
-Checkout: Pulls the repo from GitHub.
+API keys
 
-Build: Installs npm dependencies.
+TLS certificates
 
-Test: Runs unit tests.
+
+Secrets are base64-encoded, not encrypted by default (though encryption at rest is supported via cluster config).
 
 
 
 ---
 
-3. Activities Done
+D. Key Features of Secret
 
-Created a new Jenkins Pipeline job.
+More secure than ConfigMap for sensitive information.
 
-Wrote a basic Declarative Pipeline to print messages.
+Used similarly as ConfigMap:
 
-Added a real Git checkout and build stage.
+Injected as environment variables
 
-Experimented with different agent types (any, specific label).
-
-
-
----
-
-4. Challenges Faced
-
-Forgot to enclose pipeline {} properly at first, causing syntax errors.
-
-Misplaced steps {} inside stages directly — corrected after checking documentation.
-
-Minor issues with Git credentials when pulling private repos — learned to configure Jenkins Credentials.
-
-
-
----
-
-5. Learnings & Takeaways
-
-Declarative syntax is very organized and beginner-friendly compared to scripted pipelines.
-
-Pipelines encourage Infrastructure as Code (IaC) — no more manual clicking.
-
-Validation and indentation are crucial to avoid pipeline failures.
-
-
-
----
-
-6. Plan for Next Day
-
-Learn:
-
-Parallel Stages in Declarative Pipeline
-
-Post conditions (like always, success, failure)
-
-Using parameters in pipelines (for dynamic builds)
+Mounted as volumes
 
 
 
 
 ---
 
-Would you like me to also provide you a sample Jenkinsfile that you can directly upload and run?
-(It can be a little more complex — like including a when condition or a post block!)
+E. Differences: ConfigMap vs Secret
 
 
-pipeline {
-    agent any
+---
 
-    stages {
-        stage('Checkout') {
-            steps {
-                git 'https://github.com/amankumar/project-repo.git'
-            }
-        }
-        stage('Build') {
-            steps {
-                sh 'npm install'
-            }
-        }
-        stage('Test') {
-            steps {
-                sh 'npm test'
-            }
-        }
-    }
-}
+F. Sample YAML Snippets
 
-Checkout: Pulls the repo from GitHub.
+ConfigMap
 
-Build: Installs npm dependencies.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+data:
+  ENV: dev
+  LOG_LEVEL: debug
 
-Test: Runs unit tests.
+Secret
 
+apiVersion: v1
+kind: Secret
+metadata:
+  name: db-secret
+type: Opaque
+data:
+  username: YWRtaW4=    # base64 for 'admin'
+  password: cGFzc3dvcmQ=  # base64 for 'password'
 
 
 ---
 
 3. Activities Done
 
-Created a new Jenkins Pipeline job.
+Focused on theory only today.
 
-Wrote a basic Declarative Pipeline to print messages.
-
-Added a real Git checkout and build stage.
-
-Experimented with different agent types (any, specific label).
+Read official Kubernetes docs and watched explainer videos to understand how ConfigMaps and Secrets are applied in Pods.
 
 
 
 ---
 
-4. Challenges Faced
+4. Learnings & Takeaways
 
-Forgot to enclose pipeline {} properly at first, causing syntax errors.
+ConfigMaps improve application flexibility and environment separation.
 
-Misplaced steps {} inside stages directly — corrected after checking documentation.
+Secrets provide confidentiality and better control for critical values.
 
-Minor issues with Git credentials when pulling private repos — learned to configure Jenkins Credentials.
+Understanding the differences helps in designing secure, maintainable deployments.
 
 
 
 ---
 
-5. Learnings & Takeaways
+5. Plan for Next Day
 
-Declarative syntax is very organized and beginner-friendly compared to scripted pipelines.
+Perform practicals on:
 
-Pipelines encourage Infrastructure as Code (IaC) — no more manual clicking.
+Creating ConfigMap and Secret via kubectl
 
-Validation and indentation are crucial to avoid pipeline failures.
+Injecting them into a Pod and viewing logs
 
-
-
-Sure! Here's the Key Components section written point-wise for you:
-
-
----
-
-Key Components of a Declarative Pipeline
-
-pipeline block:
-
-The top-level block that defines the entire pipeline structure.
-
-All other components are nested inside it.
-
-
-agent block:
-
-Specifies where the pipeline or a stage will run.
-
-Example: agent any means run on any available agent/node.
-
-
-stages block:
-
-A container for one or more stages.
-
-Organizes the pipeline into major phases like Build, Test, and Deploy.
-
-
-stage block:
-
-Defines a single stage inside stages.
-
-Each stage represents a logical step in the CI/CD process.
-
-
-steps block:
-
-Contains the specific tasks or commands that need to be executed in a stage.
-
-Examples: running shell scripts, building code, executing tests.
-
-
-post block (optional):
-
-Defines actions that should run at the end of the pipeline or a stage.
-
-Example: sending notifications on build success or failure.
-
-
-environment block (optional):
-
-Used to set environment variables that will be available during the pipeline execution.
-
-
-parameters block (optional):
-
-Used to define user inputs when manually triggering a build (like selecting branch, environment, etc.).
+Mounting secrets securely
 
 
 
 
 ---
 
-Would you also like me to create a small mind map diagram if you want it even easier to visualize?
-It’ll take just a minute!
+Would you like a checklist of kubectl commands to use when you try this practically tomorrow?
 
