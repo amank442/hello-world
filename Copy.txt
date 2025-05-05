@@ -1,110 +1,124 @@
-
-Here’s your Daily Learning Report for today’s theoretical learning on Scaling and Exposing Applications in Kubernetes:
+Here’s your Daily Learning Report for today’s theoretical learning on Persistent Volumes (PV), Persistent Volume Claims (PVC), and Ingress in Kubernetes:
 
 
 ---
 
 Daily Learning Report
 
-Date: 22nd April 2025
+Date: 23rd April 2025
 Name: Aman Kumar
 Learning Track: DevOps – Kubernetes Fundamentals
-Topic Covered: Scaling and Exposing Applications in Kubernetes
+Topic Covered: PV, PVC, and Ingress in Kubernetes
 
 
 ---
 
 1. Objective of the Day
 
-To understand how Kubernetes allows you to scale applications up/down and expose them to external traffic using different types of services.
+To understand how Kubernetes handles persistent storage using PV and PVC and how Ingress manages external access to services using HTTP/HTTPS routing.
 
 
 ---
 
 2. Topics Covered
 
-A. Scaling Applications in Kubernetes
+A. Persistent Volumes (PV) and Persistent Volume Claims (PVC)
 
-What is Scaling?
+What is a PV (Persistent Volume)?
 
-The process of increasing or decreasing the number of Pod replicas for an application to match demand.
+A cluster-level storage resource provisioned by an admin (or dynamically).
 
-Kubernetes allows:
-
-Manual scaling using kubectl scale
-
-Auto-scaling using Horizontal Pod Autoscaler (HPA)
+Abstracts the underlying storage (local, NFS, cloud).
 
 
+What is a PVC (Persistent Volume Claim)?
 
-Why Scale?
+A request for storage by a user/application.
 
-To handle more traffic or reduce resource usage.
-
-Helps achieve high availability and performance efficiency.
+Specifies required size, access mode, and storage class.
 
 
-Manual Scaling Example
+Lifecycle
 
-kubectl scale deployment my-app --replicas=4
+1. Admin or dynamic provisioner creates a PV.
 
-Horizontal Pod Autoscaler (HPA)
 
-Automatically adjusts Pod count based on CPU/memory usage or custom metrics.
+2. Developer creates a PVC requesting storage.
 
-Requires metrics server installed in the cluster.
+
+3. Kubernetes binds a suitable PV to the PVC.
+
+
+4. PVC is used by Pods to mount the volume and store data.
 
 
 
----
-
-B. Exposing Applications
-
-Why Expose?
-
-By default, Pods are not accessible from outside the cluster.
-
-To make them accessible, we expose them using Kubernetes Service objects.
-
-
-
----
-
-Types of Services
-
-
----
-
-Sample Service YAML (NodePort)
+Sample PVC YAML
 
 apiVersion: v1
-kind: Service
+kind: PersistentVolumeClaim
 metadata:
-  name: my-service
+  name: my-pvc
 spec:
-  selector:
-    app: my-app
-  type: NodePort
-  ports:
-    - port: 80
-      targetPort: 8080
-      nodePort: 30036
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+
+
+---
+
+B. Ingress
+
+What is Ingress?
+
+A Kubernetes object that manages external access to services via HTTP/HTTPS.
+
+Provides routing, SSL termination, and virtual hosting.
+
+
+Ingress vs Service
+
+Service (NodePort/LoadBalancer) exposes at a single IP/port.
+
+Ingress exposes multiple services using URL paths or hostnames on a single IP.
+
+
+Ingress Controller
+
+A separate Pod that processes Ingress rules.
+
+Examples: NGINX Ingress, Traefik, HAProxy.
+
+
+Basic Ingress YAML
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: my-ingress
+spec:
+  rules:
+    - host: myapp.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: my-service
+                port:
+                  number: 80
 
 
 ---
 
 3. Activities Done
 
-Theoretical study of:
+Studied theoretical aspects of PV, PVC, and Ingress.
 
-Scaling deployments manually
-
-Concepts of auto-scaling
-
-Understanding each service type
-
-YAML examples from Kubernetes documentation
-
+Reviewed Kubernetes docs and architecture diagrams for persistent storage and ingress flow.
 
 
 
@@ -112,11 +126,11 @@ YAML examples from Kubernetes documentation
 
 4. Learnings & Takeaways
 
-Scaling ensures app availability and performance during traffic spikes.
+PV/PVC separate storage provisioning from application logic.
 
-Kubernetes Services provide a reliable and abstracted way to expose applications.
+PVC makes it easy to request and consume storage in a declarative way.
 
-Choosing the right service type depends on your deployment environment and security needs.
+Ingress helps consolidate multiple service exposures behind a single domain or IP, improving efficiency and scalability.
 
 
 
@@ -124,18 +138,16 @@ Choosing the right service type depends on your deployment environment and secur
 
 5. Plan for Next Day
 
-Practice:
+Perform hands-on tasks:
 
-Manually scaling a deployment with kubectl scale
+Create a PVC and mount it in a Pod.
 
-Creating a NodePort service
-
-Observing pod/service behavior
+Deploy an Ingress controller and configure Ingress rules for routing.
 
 
 
 
 ---
 
-Would you like a practice checklist or commands summary sheet for scaling and exposing tomorrow?
+Would you like a diagram or practice checklist to help visualize PV/PVC and Ingress flows before trying hands-on?
 
