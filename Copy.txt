@@ -1,143 +1,44 @@
-Here’s your updated and detailed Daily Learning Report with Cloud Basics, Types of Cloud, and Cloud Service Models, along with Azure-specific infrastructure concepts:
-
-
----
-
-Daily Learning Report
-
-Date: 24th April 2025
-Name: Aman Kumar
-Learning Track: DevOps – Azure Cloud Fundamentals
-Topics Covered: Cloud Basics, Cloud Types, Cloud Service Models, Azure Datacenters, and Availability Zones
-
-
----
-
-1. Objective of the Day
-
-To understand the fundamentals of cloud computing, types of cloud deployment, service models, and how Microsoft Azure structures its global infrastructure for high availability and scalability.
-
-
----
-
-2. Topics Covered
-
-A. What is Cloud Computing?
-
-Cloud computing delivers computing services (like servers, storage, databases, networking, software) over the internet.
-
-Offers flexibility, cost efficiency, and scalability without owning physical hardware.
-
-
-
----
-
-B. Types of Cloud Deployment
-
-
----
-
-C. Cloud Service Models
-
-
----
-
-D. What is Microsoft Azure?
-
-Microsoft Azure is a cloud computing platform offering over 200 products and services for:
-
-Compute, Networking, Storage
-
-Machine Learning, DevOps, Containers
-
-Identity, Databases, IoT, and Security
-
-
-
-
----
-
-E. Azure Datacenters and Infrastructure
-
-Datacenters
-
-Azure has a global network of datacenters hosting its cloud infrastructure.
-
-Each region consists of one or more datacenters, with high security and disaster recovery protocols.
-
-
-Regions
-
-A region is a set of datacenters deployed within a specific geographical area.
-
-Azure has 60+ regions worldwide.
-
-
-
----
-
-F. Availability Zones (AZs)
-
-What is an Availability Zone?
-
-An Availability Zone is a physically separate datacenter within an Azure region.
-
-Designed for high availability and fault tolerance.
-
-
-Purpose of AZs
-
-Protect against hardware, software, and power failures.
-
-Ensure 99.99% availability when apps are distributed across zones.
-
-
-
----
-
-G. Summary Table
-
-
----
-
-3. Activities Done
-
-Theoretical study of:
-
-Cloud types and service models
-
-Azure’s infrastructure and high availability mechanisms
-
-
-Referred to Microsoft Learn, official documentation, and visual guides.
-
-
-
----
-
-4. Learnings & Takeaways
-
-Cloud adoption reduces cost and improves agility.
-
-Choosing the right service model (IaaS/PaaS/SaaS) depends on project needs.
-
-Azure’s availability zones play a crucial role in building resilient applications.
-
-
-
----
-
-5. Plan for Next Day
-
-Explore the Azure Portal.
-
-Deploy a basic IaaS resource (Virtual Machine).
-
-Understand region selection and service configuration.
-
-
-
----
-
-Would you like a diagram of the cloud deployment models and service models next to visualize this structure easily?
-
+Description
+up-knowledge is a modern news website designed to provide users with timely and relevant news updates. It caters to a diverse audience interested in staying informed about current events across various categories.
+
+Features
+Breaking news updates
+Categories for different topics (e.g., geopolitics, sports, entertainment)
+Search functionality
+User authentication and profiles
+Commenting and source link
+Installation
+Ensure you have Node.js and MongoDB installed on your system. If not, you can download and install them from the official websites:
+
+Node.js
+MongoDB
+Clone the repository:
+
+Navigate to the project directory:
+
+Install dependencies: npm install
+
+in terminal run npm run dev
+
+Set up environment variables (if required).
+
+Start the development server:
+
+Usage
+Once the development server is running, you can access the website by navigating to http://localhost:3000 in your web browser. From there, you can:
+
+Browse news articles by category or use the search functionality to find specific topics.
+Create an account and log in to access personalized features such as commenting and saving articles.
+Engage with other users through comments and discussions on articles.
+Share articles on social media platforms.
+Stay updated with breaking news alerts.
+Technologies Used
+HTML/CSS
+Tailwind
+JavaScript
+Node.js
+Express.js
+MongoDB
+JSON Web Tokens (JWT) for user authentication
+bcrypt.js for password hashing
+Mongoose ODM (Object Data Modeling) for MongoDB
