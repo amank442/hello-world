@@ -1,44 +1,104 @@
-Description
-up-knowledge is a modern news website designed to provide users with timely and relevant news updates. It caters to a diverse audience interested in staying informed about current events across various categories.
-
-Features
-Breaking news updates
-Categories for different topics (e.g., geopolitics, sports, entertainment)
-Search functionality
-User authentication and profiles
-Commenting and source link
-Installation
-Ensure you have Node.js and MongoDB installed on your system. If not, you can download and install them from the official websites:
-
-Node.js
-MongoDB
-Clone the repository:
-
-Navigate to the project directory:
-
-Install dependencies: npm install
-
-in terminal run npm run dev
-
-Set up environment variables (if required).
-
-Start the development server:
-
-Usage
-Once the development server is running, you can access the website by navigating to http://localhost:3000 in your web browser. From there, you can:
-
-Browse news articles by category or use the search functionality to find specific topics.
-Create an account and log in to access personalized features such as commenting and saving articles.
-Engage with other users through comments and discussions on articles.
-Share articles on social media platforms.
-Stay updated with breaking news alerts.
-Technologies Used
-HTML/CSS
-Tailwind
-JavaScript
-Node.js
-Express.js
-MongoDB
-JSON Web Tokens (JWT) for user authentication
-bcrypt.js for password hashing
-Mongoose ODM (Object Data Modeling) for MongoDB
+pipeline {
+    agent any
+    
+    
+    parameters {
+        string(name: 'SERVICE_NAME', defaultValue: 'frontend' , description : 'Image / repository name')
+        string(name: 'IMAGE_TAG', defaultValue: "" , description : 'Docker Image Tag')
+    }
+    
+    
+    environment {
+       NODE_HOME = tool name: 'NODEJS 20'
+       DISABLE_ESLINT_PLUGIN = 'true'
+       Local_Image = "${params.SERVICE_NAME}:${params.IMAGE_TAG}"
+       ACR_NAME = 'cicdmicrosvc1-d4g7c6aehxc5amfa'
+       ACR_IMAGE = "${ACR_NAME}.azurecr.io/${params.SERVICE_NAME}:${params.IMAGE_TAG}"
+       KUBECONFIG = "${WORKSPACE}/kubeconfig"
+       IMAGE_TAG = "${BUILD_NUMBER}"
+       
+       
+       
+       
+       
+    }
+    
+    stages {
+        stage('Checkout code'){
+            steps {
+                git url: 'https://github.com/amank442/ci-cd-microsvc.git',
+                branch: 'main'
+            }
+        }
+        
+        stage('Build React'){
+            steps{
+                dir('Client'){
+                    sh "${NODE_HOME}/bin/npm install"
+                    sh "${NODE_HOME}/bin/npm run build"
+                }
+            }
+        }
+        
+        stage('Docker Build'){
+            steps{
+                sh "docker build -f Client/Dockerfile -t ${Local_Image} Client"
+            }
+        }
+         
+        stage('Triviy Scan'){
+            steps{
+                sh """ trivy image --format table --severity CRITICAL,HIGH ${Local_Image} """
+            }
+        }
+        
+        stage('Tag for ACR'){
+            steps{
+                sh """ docker tag ${Local_Image} ${ACR_IMAGE} """
+            }
+        }
+        
+        stage('Login to ACR'){
+            steps{
+                withCredentials([usernamePassword(credentialsId:'acr-creds',usernameVariable:'USERNAME',passwordVariable:'PASSWORD')]){
+                    sh """ docker login ${ACR_NAME}.azurecr.io -u ${USERNAME} -p ${PASSWORD} """
+                }
+            }
+        }
+        
+        stage('Push to ACR'){
+            steps {
+                sh 'docker push ${ACR_IMAGE}'
+            }
+        }
+        
+        
+        stage('Prepare K8s'){
+            steps{
+                withCredentials([file(credentialsId:'aks-kubeconfig',variable:'KUBECONFIG_FILE')]){
+                    sh 'rm -f $KUBECONFIG'
+                    sh 'cp $KUBECONFIG_FILE $KUBECONFIG'
+                }
+            }
+        }
+        
+        stage('Deploy to AKS'){
+            steps{
+                script{
+                    sh """
+                    sed -i "s/tag/${IMAGE_TAG}/g" K8s/Frontend-Deployment.yaml
+                    """
+                }
+                sh """
+                kubectl apply -f K8s/Frontend-Deployment.yaml
+                kubectl apply -f K8s/ingress.yaml
+                
+                """
+            }
+        }
+        
+        
+        
+        
+    }
+}
