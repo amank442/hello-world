@@ -1,86 +1,41 @@
-package com.example.ems.config;
-
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.stereotype.Component;
-import org.springframework.web.filter.OncePerRequestFilter;
-
-import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
-
-@Component
-public class JwtFilter extends OncePerRequestFilter {
-
-    private static final Logger logger = LoggerFactory.getLogger(JwtFilter.class);
-    private static final String SECRET_KEY = "216be307c8f5df540e04d2f0f59f3a47e61d98f9deb85a2614220e841a3230bc";
-
-    @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
-            throws ServletException, IOException {
-
-        String authHeader = request.getHeader("Authorization");
-
-        logger.info("Authorization header: {}", authHeader);
-
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            String token = authHeader.substring(7);
-            try {
-                Claims claims = Jwts.parser()
-                        .setSigningKey(SECRET_KEY.getBytes())
-                        .parseClaimsJws(token)
-                        .getBody();
-
-                String email = claims.getSubject();
-                String role = claims.get("role", String.class); // Ensure 'role' exists
-
-                if (role == null || role.isEmpty()) {
-                    logger.error("Role claim missing in token for email: {}", email);
-                    response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-                    response.getWriter().write("{\"errors\": [\"Role claim missing in token\"], \"status\": 403}");
-                    return;
-                }
-
-                logger.info("Token validated. Email: {}, Role: {}", email, role);
-
-                List<SimpleGrantedAuthority> authorities = Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + role.toUpperCase()));
-                UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(email, null, authorities);
-
-                SecurityContextHolder.getContext().setAuthentication(auth);
-                request.setAttribute("email", email);
-
-            } catch (Exception e) {
-                logger.error("Token validation failed: {}", e.getMessage());
-                response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-                response.getWriter().write("{\"errors\": [\"Invalid or expired token\"], \"status\": 403}");
-                return;
-            }
-        } else {
-            logger.warn("No Authorization header found or invalid format");
-        }
-
-        chain.doFilter(request, response);
-    }
-}
-
-
-
-
-
-
-
-
-2025-05-26T19:37:59.789+05:30  INFO 16248 --- [nio-8080-exec-3] com.example.ems.config.JwtFilter         : Authorization header: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbkBpbmZpbml0ZS5jb20iLCJyb2xlcyI6WyJBRE1JTiJdLCJpYXQiOjE3NDgyNjcxNTgsImV4cCI6MTc0ODI3MDc1OH0.q5ayHrQwJSXxjom4psJcXzuSm3hGvj3PMem2pJ-Ka7I
-2025-05-26T19:37:59.795+05:30 ERROR 16248 --- [nio-8080-exec-3] com.example.ems.config.JwtFilter         : Role claim missing in token for email: admin@infinite.com
+const asyncHandler = require('express-async-handler');
+const axios = require('axios');
+const jwt = require('jsonwebtoken');
+const CustomError = require('../utils/customError');
+const constants = require('../utils/constants');
+const env = require('../config/env');
+const logger = require('../utils/logger');
+const { handleAxiosError } = require('../utils/errorHandler');
  
+const login = asyncHandler(async (req, res) => {
+  const { email, password } = req.body;
+  if (!email || !password) {
+    throw new CustomError(
+      constants.errorMessages.MISSING_FIELDS,
+      constants.status.BAD_REQUEST
+    );
+  }
+  try {
+    const response = await axios.post(`${env.SPRING_BOOT_API}/api/auth/login`, {
+      email,
+      password,
+    });
+    const userRole = response.data.role; // Get role from Spring Boot response
+    const token = jwt.sign(
+      { sub: email,
+        role: userRole
+       }, env.JWT_SECRET, {
+      expiresIn: constants.JWT_EXPIRES_IN,
+    });
+    logger.info(`User ${email} logged in successfully`);
+    res.status(constants.status.OK).json({
+      accessToken: token,
+      user: response.data,
+    });
+  } catch (error) {
+    handleAxiosError(error, res);
+  }
+});
+ 
+module.exports = { login };
  
