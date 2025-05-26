@@ -1,43 +1,55 @@
-package com.example.ems.controller;
+const asyncHandler = require('express-async-handler');
+const axios = require('axios');
+const jwt = require('jsonwebtoken');
+const CustomError = require('../utils/customError');
+const constants = require('../utils/constants');
+const env = require('../config/env');
+const logger = require('../utils/logger');
+const { handleAxiosError } = require('../utils/errorHandler');
 
-import com.example.ems.dto.UserDto;
-import com.example.ems.entity.User;
-import com.example.ems.service.UserService;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
+const login = asyncHandler(async (req, res) => {
+  const { email, password } = req.body;
 
-@RestController
-@RequestMapping("/api/users")
-public class UserController {
+  if (!email || !password) {
+    throw new CustomError(
+      constants.errorMessages.MISSING_FIELDS,
+      constants.status.BAD_REQUEST
+    );
+  }
 
-    @Autowired
-    private UserService userService;
+  try {
+    // Send login request to Spring Boot API
+    const response = await axios.post(`${env.SPRING_BOOT_API}/api/auth/login`, {
+      email,
+      password,
+    });
 
-    // Only ADMIN can create a new user
-    @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
-    public User createUser(@Valid @RequestBody UserDto userDto) {
-        return userService.createUser(userDto);
+    const userRole = response.data.role;
+
+    // Ensure role is either ADMIN or EMPLOYEE
+    if (!['ADMIN', 'EMPLOYEE'].includes(userRole)) {
+      throw new CustomError('Invalid role returned from backend', constants.status.BAD_REQUEST);
     }
 
-    // Get profile of the current user (employee or admin)
-    @GetMapping("/profile")
-    public User getProfile(HttpServletRequest request) {
-        String email = (String) request.getAttribute("email");
-        return userService.getUserByEmail(email);
-    }
+    // Generate JWT with single role
+    const token = jwt.sign(
+      {
+        sub: email,
+        role: userRole, // Fixed: single role instead of roles array
+      },
+      env.JWT_SECRET,
+      { expiresIn: constants.JWT_EXPIRES_IN }
+    );
 
-    // Update profile of the current user
-    @PutMapping("/profile")
-    public User updateProfile(@RequestBody UserDto userDto, HttpServletRequest request) {
-        String email = (String) request.getAttribute("email");
-        User user = userService.getUserByEmail(email);
-        user.setEmail(userDto.email());
-        user.setPassword(userDto.password());
-        user.setRole(userDto.role()); // This should match enum Role
-        return userService.saveUser(user);
-    }
-}
+    logger.info(`User ${email} logged in successfully`);
+
+    res.status(constants.status.OK).json({
+      accessToken: token,
+      user: response.data,
+    });
+  } catch (error) {
+    handleAxiosError(error, res);
+  }
+});
+
+module.exports = { login };
