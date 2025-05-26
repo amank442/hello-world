@@ -1,48 +1,6 @@
-const asyncHandler = require('express-async-handler');
-const axios = require('axios');
-const jwt = require('jsonwebtoken');
-const CustomError = require('../utils/customError');
-const constants = require('../utils/constants');
-const env = require('../config/env');
-const logger = require('../utils/logger');
-const { handleAxiosError } = require('../utils/errorHandler');
- 
-const login = asyncHandler(async (req, res) => {
-  const { email, password } = req.body;
-  if (!email || !password) {
-    throw new CustomError(
-      constants.errorMessages.MISSING_FIELDS,
-      constants.status.BAD_REQUEST
-    );
-  }
-  try {
-    const response = await axios.post(`${env.SPRING_BOOT_API}/api/auth/login`, {
-      email,
-      password,
-    });
-    const userRole = response.data.role; // Get role from Spring Boot response
-    const token = jwt.sign({ sub: email, role: userRole }, env.JWT_SECRET, {
-      expiresIn: constants.JWT_EXPIRES_IN,
-    });
-    logger.info(`User ${email} logged in successfully`);
-    res.status(constants.status.OK).json({
-      accessToken: token,
-      user: response.data,
-    });
-  } catch (error) {
-    handleAxiosError(error, res);
-  }
-});
- 
-module.exports = { login };
- 
-2025-05-26T18:47:02.926+05:30  INFO 20088 --- [nio-8080-exec-3] com.example.ems.service.AuthService      : Authentication successful for email: admin@infinite.com
-2025-05-26T18:47:02.926+05:30  INFO 20088 --- [nio-8080-exec-3] c.example.ems.controller.AuthController  : Login successful for email: admin@infinite.com
-2025-05-26T18:47:02.931+05:30 DEBUG 20088 --- [nio-8080-exec-3] o.s.s.w.a.AnonymousAuthenticationFilter  : Set SecurityContextHolder to anonymous SecurityContext
-2025-05-26T18:51:40.920+05:30 DEBUG 20088 --- [nio-8080-exec-7] o.s.security.web.FilterChainProxy        : Securing POST /api/users
-2025-05-26T18:51:40.920+05:30  INFO 20088 --- [nio-8080-exec-7] com.example.ems.config.JwtFilter         : Authorization header: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbkBpbmZpbml0ZS5jb20iLCJyb2xlIjoiQURNSU4iLCJpYXQiOjE3NDgyNjU0MjIsImV4cCI6MTc0ODI2OTAyMn0.58SY_SOAVQgwgGDm0hvJ4mMLMaxWvY8jbE1KSTS-a9o
-2025-05-26T18:51:40.937+05:30 ERROR 20088 --- [nio-8080-exec-7] com.example.ems.config.JwtFilter         : Token validation failed: JWT signature does not match locally computed signature. JWT validity cannot be asserted and should not be trusted.
-2025-05-26T18:53:10.886+05:30 DEBUG 20088 --- [nio-8080-exec-1] o.s.security.web.FilterChainProxy        : Securing POST /api/users
-2025-05-26T18:53:10.886+05:30  INFO 20088 --- [nio-8080-exec-1] com.example.ems.config.JwtFilter         : Authorization header: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbkBpbmZpbml0ZS5jb20iLCJyb2xlIjoiQURNSU4iLCJpYXQiOjE3NDgyNjU0MjIsImV4cCI6MTc0ODI2OTAyMn0.58SY_SOAVQgwgGDm0hvJ4mMLMaxWvY8jbE1KSTS-a9o
-2025-05-26T18:53:10.886+05:30 ERROR 20088 --- [nio-8080-exec-1] com.example.ems.config.JwtFilter         : Token validation failed: JWT signature does not match locally computed signature. JWT validity cannot be asserted and should not be trusted.
- 
+2025-05-26T19:03:01.393+05:30 DEBUG 16248 --- [nio-8080-exec-1] o.s.security.web.FilterChainProxy        : Securing POST /api/users
+2025-05-26T19:03:01.411+05:30  INFO 16248 --- [nio-8080-exec-1] com.example.ems.config.JwtFilter         : Authorization header: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbkBpbmZpbml0ZS5jb20iLCJpYXQiOjE3NDgyNjQxMjAsImV4cCI6MTc0ODI2NzcyMH0.3B053P6dyX7o5jh_muMENW5jyc5hP00GKT20uH5HaTg
+2025-05-26T19:03:01.575+05:30 ERROR 16248 --- [nio-8080-exec-1] com.example.ems.config.JwtFilter         : Role claim missing in token for email: admin@infinite.com
+2025-05-26T19:03:15.911+05:30 DEBUG 16248 --- [nio-8080-exec-3] o.s.security.web.FilterChainProxy        : Securing POST /api/users
+2025-05-26T19:03:15.911+05:30  INFO 16248 --- [nio-8080-exec-3] com.example.ems.config.JwtFilter         : Authorization header: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbkBpbmZpbml0ZS5jb20iLCJpYXQiOjE3NDgyNjQxMjAsImV4cCI6MTc0ODI2NzcyMH0.3B053P6dyX7o5jh_muMENW5jyc5hP00GKT20uH5HaTg
+2025-05-26T19:03:15.911+05:30 ERROR 16248 --- [nio-8080-exec-3] com.example.ems.config.JwtFilter         : Role claim missing in token for email: admin@infinite.com
