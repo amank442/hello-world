@@ -1,75 +1,43 @@
-package com.example.ems.config;
-
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.stereotype.Component;
-import org.springframework.web.filter.OncePerRequestFilter;
-
-import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
-import java.util.stream.Collectors;
-
-@Component
-public class JwtFilter extends OncePerRequestFilter {
-    private static final String SECRET_KEY = "216be307c8f5df540e04d2f0f59f3a47e61d98f9deb85a2614220e841a3230bc";
-    private static final Logger logger = LoggerFactory.getLogger(JwtFilter.class);
-
-    @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
-            throws ServletException, IOException {
-
-        String authHeader = request.getHeader("Authorization");
-        logger.info("Authorization header: {}", authHeader);
-
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            String token = authHeader.substring(7);
-            try {
-                Claims claims = Jwts.parser()
-                        .setSigningKey(SECRET_KEY.getBytes())
-                        .parseClaimsJws(token)
-                        .getBody();
-
-                String email = claims.getSubject();
-                List<String> roles = claims.get("roles", List.class);
-
-                if (roles == null || roles.isEmpty()) {
-                    logger.error("Roles claim missing in token for email: {}", email);
-                    response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-                    response.getWriter().write("{\"errors\": [\"Roles claim missing in token\"], \"status\": 403}");
-                    return;
-                }
-
-                logger.info("Token validated. Email: {}, Roles: {}", email, roles);
-
-                List<SimpleGrantedAuthority> authorities = roles.stream()
-                        .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
-                        .collect(Collectors.toList());
-
-                UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
-                        email, null, authorities);
-                SecurityContextHolder.getContext().setAuthentication(auth);
-                request.setAttribute("email", email);
-
-            } catch (Exception e) {
-                logger.error("Token validation failed: {}", e.getMessage());
-                response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-                response.getWriter().write("{\"errors\": [\"Request to Spring Boot failed\"], \"status\": 403}");
-                return;
-            }
-        } else {
-            logger.warn("No Authorization header found or invalid format");
-        }
-
-        chain.doFilter(request, response);
-    }
-}
+const axios = require('axios');
+const { handleAxiosError } = require('../utils/errorHandler');
+const env = require('../config/env');
+ 
+const getUserProfile = async (req, res) => {
+  try {
+    const response = await axios.get(`${env.SPRING_BOOT_API}/api/users/profile`, {
+      headers: { Authorization: req.headers.authorization },
+    });
+    res.status(response.status).json(response.data);
+  } catch (error) {
+    handleAxiosError(error, res);
+  }
+};
+ 
+const updateUserProfile = async (req, res) => {
+  try {
+    const response = await axios.put(`${env.SPRING_BOOT_API}/api/users/profile`, req.body, {
+      headers: { Authorization: req.headers.authorization },
+    });
+    res.status(response.status).json(response.data);
+  } catch (error) {
+    handleAxiosError(error, res);
+  }
+};
+ 
+// Add the new controller function for adding users
+const addUser = async (req, res) => {
+  try {
+    const response = await axios.post(`${env.SPRING_BOOT_API}/api/users`, req.body, {
+      headers: { Authorization: req.headers.authorization },
+     
+    });
+    console.log('Request headers:', { Authorization: req.headers.authorization });
+    res.status(response.status).json(response.data);
+  } catch (error) {
+    console.log('Error forwarding to Spring Boot:', error.response?.status, error.response?.data);
+    handleAxiosError(error, res);
+  }
+};
+ 
+module.exports = { getUserProfile, updateUserProfile, addUser };
+ 
