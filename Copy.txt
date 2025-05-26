@@ -72,3 +72,15 @@ public class JwtFilter extends OncePerRequestFilter {
         chain.doFilter(request, response);
     }
 }
+
+
+
+
+
+
+
+
+2025-05-26T19:37:59.789+05:30  INFO 16248 --- [nio-8080-exec-3] com.example.ems.config.JwtFilter         : Authorization header: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbkBpbmZpbml0ZS5jb20iLCJyb2xlcyI6WyJBRE1JTiJdLCJpYXQiOjE3NDgyNjcxNTgsImV4cCI6MTc0ODI3MDc1OH0.q5ayHrQwJSXxjom4psJcXzuSm3hGvj3PMem2pJ-Ka7I
+2025-05-26T19:37:59.795+05:30 ERROR 16248 --- [nio-8080-exec-3] com.example.ems.config.JwtFilter         : Role claim missing in token for email: admin@infinite.com
+ 
+ 
