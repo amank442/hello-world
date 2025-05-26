@@ -1,6 +1,68 @@
-2025-05-26T19:03:01.393+05:30 DEBUG 16248 --- [nio-8080-exec-1] o.s.security.web.FilterChainProxy        : Securing POST /api/users
-2025-05-26T19:03:01.411+05:30  INFO 16248 --- [nio-8080-exec-1] com.example.ems.config.JwtFilter         : Authorization header: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbkBpbmZpbml0ZS5jb20iLCJpYXQiOjE3NDgyNjQxMjAsImV4cCI6MTc0ODI2NzcyMH0.3B053P6dyX7o5jh_muMENW5jyc5hP00GKT20uH5HaTg
-2025-05-26T19:03:01.575+05:30 ERROR 16248 --- [nio-8080-exec-1] com.example.ems.config.JwtFilter         : Role claim missing in token for email: admin@infinite.com
-2025-05-26T19:03:15.911+05:30 DEBUG 16248 --- [nio-8080-exec-3] o.s.security.web.FilterChainProxy        : Securing POST /api/users
-2025-05-26T19:03:15.911+05:30  INFO 16248 --- [nio-8080-exec-3] com.example.ems.config.JwtFilter         : Authorization header: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbkBpbmZpbml0ZS5jb20iLCJpYXQiOjE3NDgyNjQxMjAsImV4cCI6MTc0ODI2NzcyMH0.3B053P6dyX7o5jh_muMENW5jyc5hP00GKT20uH5HaTg
-2025-05-26T19:03:15.911+05:30 ERROR 16248 --- [nio-8080-exec-3] com.example.ems.config.JwtFilter         : Role claim missing in token for email: admin@infinite.com
+package com.example.ems.config;
+ 
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.stereotype.Component;
+import org.springframework.web.filter.OncePerRequestFilter;
+import com.example.ems.entity.User;
+import com.example.ems.service.UserService;
+ 
+import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
+ 
+@Component
+public class JwtFilter extends OncePerRequestFilter {
+    private static final String SECRET_KEY = "216be307c8f5df540e04d2f0f59f3a47e61d98f9deb85a2614220e841a3230bc";
+    private static final Logger logger = LoggerFactory.getLogger(JwtFilter.class);
+ 
+    @Override
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
+            throws ServletException, IOException {
+        String authHeader = request.getHeader("Authorization");
+        logger.info("Authorization header: {}", authHeader);
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            String token = authHeader.substring(7);
+            try {
+                Claims claims = Jwts.parser()
+                        .setSigningKey(SECRET_KEY.getBytes())
+                        .parseClaimsJws(token)
+                        .getBody();
+                String email = claims.getSubject();
+                String role = claims.get("role", String.class);
+                if (role == null) {
+                    logger.error("Role claim missing in token for email: {}", email);
+                    response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                    response.getWriter().write("{\"errors\": [\"Role claim missing in token\"], \"status\": 403}");
+                    return;
+                }
+                logger.info("Token validated. Email: {}, Role: {}", email, role);
+ 
+                List<SimpleGrantedAuthority> authorities = Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + role));
+                UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
+                        email, null, authorities);
+                SecurityContextHolder.getContext().setAuthentication(auth);
+                request.setAttribute("email", email);
+            } catch (Exception e) {
+                logger.error("Token validation failed: {}", e.getMessage());
+                response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                response.getWriter().write("{\"errors\": [\"Request to Spring Boot failed\"], \"status\": 403}");
+                return;
+            }
+        } else {
+            logger.warn("No Authorization header found or invalid format");
+        }
+        chain.doFilter(request, response);
+    }
+}
+ 
