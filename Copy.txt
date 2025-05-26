@@ -1,41 +1,43 @@
-const asyncHandler = require('express-async-handler');
-const axios = require('axios');
-const jwt = require('jsonwebtoken');
-const CustomError = require('../utils/customError');
-const constants = require('../utils/constants');
-const env = require('../config/env');
-const logger = require('../utils/logger');
-const { handleAxiosError } = require('../utils/errorHandler');
- 
-const login = asyncHandler(async (req, res) => {
-  const { email, password } = req.body;
-  if (!email || !password) {
-    throw new CustomError(
-      constants.errorMessages.MISSING_FIELDS,
-      constants.status.BAD_REQUEST
-    );
-  }
-  try {
-    const response = await axios.post(`${env.SPRING_BOOT_API}/api/auth/login`, {
-      email,
-      password,
-    });
-    const userRole = response.data.role; // Get role from Spring Boot response
-    const token = jwt.sign(
-      { sub: email,
-        role: userRole
-       }, env.JWT_SECRET, {
-      expiresIn: constants.JWT_EXPIRES_IN,
-    });
-    logger.info(`User ${email} logged in successfully`);
-    res.status(constants.status.OK).json({
-      accessToken: token,
-      user: response.data,
-    });
-  } catch (error) {
-    handleAxiosError(error, res);
-  }
-});
- 
-module.exports = { login };
- 
+package com.example.ems.controller;
+
+import com.example.ems.dto.UserDto;
+import com.example.ems.entity.User;
+import com.example.ems.service.UserService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/api/users")
+public class UserController {
+
+    @Autowired
+    private UserService userService;
+
+    // Only ADMIN can create a new user
+    @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public User createUser(@Valid @RequestBody UserDto userDto) {
+        return userService.createUser(userDto);
+    }
+
+    // Get profile of the current user (employee or admin)
+    @GetMapping("/profile")
+    public User getProfile(HttpServletRequest request) {
+        String email = (String) request.getAttribute("email");
+        return userService.getUserByEmail(email);
+    }
+
+    // Update profile of the current user
+    @PutMapping("/profile")
+    public User updateProfile(@RequestBody UserDto userDto, HttpServletRequest request) {
+        String email = (String) request.getAttribute("email");
+        User user = userService.getUserByEmail(email);
+        user.setEmail(userDto.email());
+        user.setPassword(userDto.password());
+        user.setRole(userDto.role()); // This should match enum Role
+        return userService.saveUser(user);
+    }
+}
