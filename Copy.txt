@@ -1,20 +1,97 @@
-const jwt = require('jsonwebtoken');
-const CustomError = require('../utils/customError');
-const env = require('../config/env');
+const asyncHandler = require('express-async-handler');
+const axios = require('axios');
 const constants = require('../utils/constants');
+const env = require('../config/env');
+const { handleAxiosError } = require('../utils/errorHandler');
  
-const authMiddleware = (req, res, next) => {
-  const token = req.headers.authorization?.split(' ')[1];
-  if (!token) {
-    throw new CustomError('No token provided', constants.status.UNAUTHORIZED);
-  }
+const applyLeave = asyncHandler(async (req, res) => {
+  const { employeeEmail, startDate, endDate, reason } = req.body;
   try {
-    const decoded = jwt.verify(token, env.JWT_SECRET);
-    req.user = decoded;
-    next();
+    const response = await axios.post(`${env.SPRING_BOOT_API}/api/leaves/apply`, {
+      employeeEmail,
+      startDate,
+      endDate,
+      reason,
+    }, {
+      headers: { Authorization: req.headers.authorization },
+    });
+    res.status(constants.status.CREATED).json(response.data);
   } catch (error) {
-    throw new CustomError('Invalid token', constants.status.UNAUTHORIZED);
+    handleAxiosError(error, res);
   }
-};
+});
  
-module.exports = { authMiddleware };
+const getCurrentLeaves = asyncHandler(async (req, res) => {
+  const { employeeEmail, page = 0, size = 10 } = req.query;
+  try {
+    const response = await axios.get(`${env.SPRING_BOOT_API}/api/leaves/current`, {
+      params: { page, size },
+      headers: { Authorization: req.headers.authorization },
+    });
+    res.status(constants.status.OK).json(response.data);
+  } catch (error) {
+    handleAxiosError(error, res);
+  }
+});
+ 
+const getPendingLeaves = asyncHandler(async (req, res) => {
+  const { page = 0, size = 10 } = req.query;
+  try {
+    const response = await axios.get(`${env.SPRING_BOOT_API}/api/leaves/pending`, {
+      params: { page, size },
+      headers: { Authorization: req.headers.authorization },
+    });
+    res.status(constants.status.OK).json(response.data);
+  } catch (error) {
+    handleAxiosError(error, res);
+  }
+});
+ 
+const approveLeave = asyncHandler(async (req, res) => {
+  const { leaveId } = req.params;
+  try {
+    const response = await axios.put(`${env.SPRING_BOOT_API}/api/leaves/approve/${leaveId}`, {}, {
+      headers: { Authorization: req.headers.authorization },
+    });
+    res.status(constants.status.OK).json(response.data);
+  } catch (error) {
+    handleAxiosError(error, res);
+  }
+});
+ 
+const rejectLeave = asyncHandler(async (req, res) => {
+  const { leaveId } = req.params;
+  const { declineReason } = req.body;
+  try {
+    const response = await axios.put(`${env.SPRING_BOOT_API}/api/leaves/reject/${leaveId}`, {
+      declineReason,
+    }, {
+      headers: { Authorization: req.headers.authorization },
+    });
+    res.status(constants.status.OK).json(response.data);
+  } catch (error) {
+    handleAxiosError(error, res);
+  }
+});
+ 
+const getLeaveHistory = asyncHandler(async (req, res) => {
+  const { employeeEmail, year, page, size, sortBy, direction } = req.query;
+  try {
+    const response = await axios.get(`${env.SPRING_BOOT_API}/api/leaves/history`, {
+      params: { page, size, sortBy, direction },
+      headers: { Authorization: req.headers.authorization },
+    });
+    res.status(constants.status.OK).json(response.data);
+  } catch (error) {
+    handleAxiosError(error, res);
+  }
+});
+ 
+module.exports = {
+  applyLeave,
+  getCurrentLeaves,
+  getPendingLeaves,
+  approveLeave,
+  rejectLeave,
+  getLeaveHistory
+};
