@@ -1,71 +1,20 @@
-// Leave Actions: Handles all leave-related operations
-import axios from 'axios';
+const jwt = require('jsonwebtoken');
+const CustomError = require('../utils/customError');
+const env = require('../config/env');
+const constants = require('../utils/constants');
  
-export const applyLeave = (leaveData, token) => async dispatch => {
-  dispatch({ type: 'APPLY_LEAVE_REQUEST' });
+const authMiddleware = (req, res, next) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) {
+    throw new CustomError('No token provided', constants.status.UNAUTHORIZED);
+  }
   try {
-    const response = await axios.post('http://localhost:5000/api/leaves/apply', leaveData, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    dispatch({ type: 'APPLY_LEAVE_SUCCESS', payload: response.data });
+    const decoded = jwt.verify(token, env.JWT_SECRET);
+    req.user = decoded;
+    next();
   } catch (error) {
-    dispatch({ type: 'APPLY_LEAVE_FAILURE', payload: error.response?.data?.errors[0] || 'Failed to apply leave' });
+    throw new CustomError('Invalid token', constants.status.UNAUTHORIZED);
   }
 };
  
-export const fetchCurrentLeaves = (token) => async dispatch => {
-  dispatch({ type: 'FETCH_LEAVES_REQUEST' });
-  try {
-    const response = await axios.get('http://localhost:5000/api/leaves/current?page=0&size=10', {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    dispatch({ type: 'FETCH_LEAVES_SUCCESS', payload: response.data.content });
-  } catch (error) {
-    dispatch({ type: 'FETCH_LEAVES_FAILURE', payload: error.response?.data?.errors[0] || 'Failed to fetch leaves' });
-  }
-};
- 
-export const fetchLeaveHistory = (token, year) => async dispatch => {
-  dispatch({ type: 'FETCH_HISTORY_REQUEST' });
-  try {
-    const response = await axios.get(`http://localhost:5000/api/leaves/history?year=${year}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    dispatch({ type: 'FETCH_HISTORY_SUCCESS', payload: response.data });
-  } catch (error) {
-    dispatch({ type: 'FETCH_HISTORY_FAILURE', payload: error.response?.data?.errors[0] || 'Failed to fetch history' });
-  }
-};
- 
-export const cancelLeave = (leaveId, token) => async dispatch => {
-  try {
-    await axios.delete(`http://localhost:5000/api/leaves/${leaveId}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    dispatch({ type: 'CANCEL_LEAVE_SUCCESS', payload: leaveId });
-  } catch (error) {
-    console.error('Failed to cancel leave:', error);
-  }
-};
- 
-export const approveLeave = (leaveId, token) => async dispatch => {
-  try {
-    await axios.put(`http://localhost:5000/api/leaves/${leaveId}/approve`, {}, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    dispatch({ type: 'APPROVE_LEAVE_SUCCESS', payload: { id: leaveId } });
-  } catch (error) {
-    console.error('Failed to approve leave:', error);
-  }
-};
- 
-export const declineLeave = (leaveId, reason, token) => async dispatch => {
-  try {
-    await axios.put(`http://localhost:5000/api/leaves/${leaveId}/decline`, { reason }, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    dispatch({ type: 'DECLINE_LEAVE_SUCCESS', payload: { id: leaveId } });
-  } catch (error) {
-    console.error('Failed to decline leave:', error);
-  }
-};
+module.exports = { authMiddleware };
