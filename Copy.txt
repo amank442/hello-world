@@ -1,33 +1,71 @@
-// Auth Actions: Handles login and logout
+// Leave Actions: Handles all leave-related operations
 import axios from 'axios';
  
-export const LOGIN_REQUEST = 'LOGIN_REQUEST';
-export const LOGIN_SUCCESS = 'LOGIN_SUCCESS';
-export const LOGIN_FAILURE = 'LOGIN_FAILURE';
-export const LOGOUT = 'LOGOUT';
- 
-export const login = (email, password) => async dispatch => {
-    dispatch({ type: LOGIN_REQUEST });
-    try {
-        sessionStorage.removeItem('token');
-        const response = await axios.post('http://localhost:5000/api/auth/login', { email, password });
-        sessionStorage.setItem('token', response.data.accessToken);
-        dispatch({ type: LOGIN_SUCCESS, payload: { token: response.data.accessToken, user: response.data.user } });
-        return response.data;
-    } catch (error) {
-        const message = error.response?.data?.errors?.[0] || 'Login failed';
-        dispatch({ type: LOGIN_FAILURE, payload: message });
-        throw error;
-    }
+export const applyLeave = (leaveData, token) => async dispatch => {
+  dispatch({ type: 'APPLY_LEAVE_REQUEST' });
+  try {
+    const response = await axios.post('http://localhost:5000/api/leaves/apply', leaveData, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    dispatch({ type: 'APPLY_LEAVE_SUCCESS', payload: response.data });
+  } catch (error) {
+    dispatch({ type: 'APPLY_LEAVE_FAILURE', payload: error.response?.data?.errors[0] || 'Failed to apply leave' });
+  }
 };
  
-export const logout = () => (dispatch) => {
-    sessionStorage.removeItem('token');
-    dispatch({ type: LOGOUT });
+export const fetchCurrentLeaves = (token) => async dispatch => {
+  dispatch({ type: 'FETCH_LEAVES_REQUEST' });
+  try {
+    const response = await axios.get('http://localhost:5000/api/leaves/current?page=0&size=10', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    dispatch({ type: 'FETCH_LEAVES_SUCCESS', payload: response.data.content });
+  } catch (error) {
+    dispatch({ type: 'FETCH_LEAVES_FAILURE', payload: error.response?.data?.errors[0] || 'Failed to fetch leaves' });
+  }
 };
  
-export const loginSuccess = (payload) => ({
-    type: LOGIN_SUCCESS,
-    payload,
-});
+export const fetchLeaveHistory = (token, year) => async dispatch => {
+  dispatch({ type: 'FETCH_HISTORY_REQUEST' });
+  try {
+    const response = await axios.get(`http://localhost:5000/api/leaves/history?year=${year}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    dispatch({ type: 'FETCH_HISTORY_SUCCESS', payload: response.data });
+  } catch (error) {
+    dispatch({ type: 'FETCH_HISTORY_FAILURE', payload: error.response?.data?.errors[0] || 'Failed to fetch history' });
+  }
+};
  
+export const cancelLeave = (leaveId, token) => async dispatch => {
+  try {
+    await axios.delete(`http://localhost:5000/api/leaves/${leaveId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    dispatch({ type: 'CANCEL_LEAVE_SUCCESS', payload: leaveId });
+  } catch (error) {
+    console.error('Failed to cancel leave:', error);
+  }
+};
+ 
+export const approveLeave = (leaveId, token) => async dispatch => {
+  try {
+    await axios.put(`http://localhost:5000/api/leaves/${leaveId}/approve`, {}, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    dispatch({ type: 'APPROVE_LEAVE_SUCCESS', payload: { id: leaveId } });
+  } catch (error) {
+    console.error('Failed to approve leave:', error);
+  }
+};
+ 
+export const declineLeave = (leaveId, reason, token) => async dispatch => {
+  try {
+    await axios.put(`http://localhost:5000/api/leaves/${leaveId}/decline`, { reason }, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    dispatch({ type: 'DECLINE_LEAVE_SUCCESS', payload: { id: leaveId } });
+  } catch (error) {
+    console.error('Failed to decline leave:', error);
+  }
+};
