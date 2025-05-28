@@ -1,32 +1,237 @@
-const employeeEmail = req.user.email; // Extracted from decoded token in authMiddleware
-const response = await axios.get(`${env.SPRING_BOOT_API}/api/leaves/history`, {
-  params: { employeeEmail, year, page, size, sortBy, direction },
-  headers: { Authorization: req.headers.authorization },
-});
+frontend deploymnet
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend-deployment
+spec:
+  selector:
+    matchLabels:
+      app: vite-frontend
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: vite-frontend
+    spec:
+      containers:
+      - name: vite-frontend
+        image: cicdmicrosvc1-d4g7c6aehxc5amfa.azurecr.io/omm-frontend:tag
+        ports:
+        - containerPort: 80
+        envFrom:
+        - configMapRef:
+            name: frontend-config
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-service
+spec:
+  selector:
+    app: vite-frontend
+  type: ClusterIP
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 80
 
 
+frontend config
+
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: frontend-config
+data:
+  VITE_NODE_BASE_URL: http://node-service.default.svc.cluster.local:3000
 
 
-export const fetchLeaveHistory = (token, year, page = 0, size = 10) => async (dispatch) => {
-  dispatch({ type: 'FETCH_HISTORY_REQUEST' });
-  console.log("dispatch", { year, page, size, token });
+ingresss 
 
-  try {
-    const response = await axios.get("http://localhost:5000/api/leaves/history", {
-      params: { year, page, size },
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: full-stack-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  ingressClassName: nginx
+  rules:
+  - http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: frontend-service
+            port:
+              number: 80
 
-    dispatch({
-      type: 'FETCH_HISTORY_SUCCESS',
-      payload: response.data,
-    });
-  } catch (error) {
-    dispatch({
-      type: 'FETCH_HISTORY_FAILURE',
-      payload: error.response?.data?.error || 'Failed to fetch history',
-    });
-  }
-};
+
+node deployment
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: node-backend
+spec:
+  selector:
+    matchLabels:
+      app: node
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: node
+    spec:
+      containers:
+      - name: node-backend
+        image: cicdmicrosvc1-d4g7c6aehxc5amfa.azurecr.io/omm-node:tag
+        ports:
+        - containerPort: 3000
+        envFrom:
+        - secretRef:
+            name: node-secret
+        - configMapRef:
+            name: node-config
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: node-service
+spec:
+  selector:
+    app: node
+  type: ClusterIP
+  ports:
+  - protocol: TCP
+    port: 3000
+    targetPort: 3000
+
+
+node config 
+
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: node-config
+data:
+  SPRING_BASE_URL: http://spring-service.default.svc.cluster.local:8081
+
+
+spring deployment
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: omm-spring-deployments
+spec:
+  selector:
+    matchLabels:
+      app: spring
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: spring
+    spec:
+      containers:
+      - name: spring-boot
+        image: cicdmicrosvc1-d4g7c6aehxc5amfa.azurecr.io/omm-spring:tag
+        ports:
+        - containerPort: 8081
+        # env:
+
+        # - name: USER
+        #   valueFrom:
+        #     secretKeyRef:
+        #       name: spring-db-secret
+        #       key: DB_USERNAME
+
+        # - name: PASSWORD
+        #   valueFrom:
+        #     secretKeyRef:
+        #       name: spring-db-secret
+        #       key: DB_PASSWORD
+
+        # - name: URL
+        #   valueFrom:
+        #     configMapKeyRef:
+        #       name: spring-db-config
+        #       key: DB_URL
+
+        # - name: DRIVER
+        #   valueFrom:
+        #     configMapKeyRef:
+        #       name: spring-db-config
+        #       key: DB_DRIVER
+
+        # - name: DIALECT
+        #   valueFrom:
+        #     configMapKeyRef:
+        #       name: spring-db-config
+        #       key: JPA_DIALECT
+
+        # - name: SHOW-SQL
+        #   valueFrom:
+        #     configMapKeyRef:
+        #       name: spring-db-config
+        #       key: JPA_SHOW_SQL
+
+        # - name: HBM2DDL
+        #   valueFrom:
+        #     configMapKeyRef:
+        #       name: spring-db-config
+        #       key: JPA_HBM2DDL_AUTO
+
+
+        envFrom:
+        - configMapRef:
+            name: spring-db-config
+        - secretRef:
+            name: spring-db-secret
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: spring-service
+spec:
+  selector:
+    app: spring
+  type: ClusterIP
+  ports:
+  - protocol: TCP
+    port: 8081
+    targetPort: 8081
+
+spring config
+
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: spring-db-config
+data:
+  DB_URL: jdbc:mysql://springsql.mysql.database.azure.com:3306/dbs?useSSL=TRUE
+  DB_DRIVER: com.mysql.cj.jdbc.Driver
+  JPA_DIALECT: org.hibernate.dialect.MySQLDialect
+  JPA_SHOW_SQL: 'FALSE'
+  JPA_HBM2DDL_AUTO: update
+  PORT: "8081"
+
+
+spring secret
+
+apiVersion: v1
+kind: Secret
+metadata:
+  name: spring-db-secret
+type: Opaque
+data:
+  DB_USERNAME: S2FtYW4=
+  DB_PASSWORD: QW1hbkAzMTQ2
+
+
