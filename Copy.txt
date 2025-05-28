@@ -1,14 +1,24 @@
+const employeeEmail = req.user.email; // Extracted from decoded token in authMiddleware
+const response = await axios.get(`${env.SPRING_BOOT_API}/api/leaves/history`, {
+  params: { employeeEmail, year, page, size, sortBy, direction },
+  headers: { Authorization: req.headers.authorization },
+});
+
+
+
+
 export const fetchLeaveHistory = (token, year, page = 0, size = 10) => async (dispatch) => {
   dispatch({ type: 'FETCH_HISTORY_REQUEST' });
- 
+  console.log("dispatch", { year, page, size, token });
+
   try {
-    const response = await axios.get(`http://localhost:5000/api/leaves/history`, {
+    const response = await axios.get("http://localhost:5000/api/leaves/history", {
       params: { year, page, size },
       headers: {
         Authorization: `Bearer ${token}`,
       },
     });
- 
+
     dispatch({
       type: 'FETCH_HISTORY_SUCCESS',
       payload: response.data,
@@ -19,90 +29,4 @@ export const fetchLeaveHistory = (token, year, page = 0, size = 10) => async (di
       payload: error.response?.data?.error || 'Failed to fetch history',
     });
   }
-};-> from frontend(thunk)
- 
-// Leave Reducer: Manages leave-related state
-const initialState = {
-  appliedLeaves: [],
-  currentLeaves: [],
-  leaveHistory: [],
-  leaveBalances: { SICK: 10, CASUAL: 15, PAID: 20 }, // Dummy balances
-  loading: false,
-  error: null,
 };
- 
-const leaveReducer = (state = initialState, action) => {
-  switch (action.type) {
-    case 'FETCH_LEAVES_REQUEST':
-    case 'APPLY_LEAVE_REQUEST':
-    case 'FETCH_HISTORY_REQUEST':
-      return { ...state, loading: true, error: null };
-    case 'FETCH_LEAVES_SUCCESS':
-      return { ...state, currentLeaves: action.payload, loading: false };
-    case 'APPLY_LEAVE_SUCCESS':
-      return { ...state, appliedLeaves: [...state.appliedLeaves, action.payload], loading: false };
-    case 'FETCH_HISTORY_SUCCESS':
-      return { ...state, leaveHistory: action.payload, loading: false };
-    case 'CANCEL_LEAVE_SUCCESS':
-      return {
-        ...state,
-        appliedLeaves: state.appliedLeaves.filter(leave => leave.id !== action.payload),
-        loading: false,
-      };
-    case 'APPROVE_LEAVE_SUCCESS':
-    case 'DECLINE_LEAVE_SUCCESS':
-      return {
-        ...state,
-        currentLeaves: state.currentLeaves.filter(leave => leave.id !== action.payload.id),
-        loading: false,
-      };
-    case 'FETCH_LEAVES_FAILURE':
-    case 'APPLY_LEAVE_FAILURE':
-    case 'FETCH_HISTORY_FAILURE':
-      return { ...state, error: action.payload, loading: false };
-    default:
-      return state;
-  }
-};
- 
-export default leaveReducer;
- 
- 
-const getLeaveHistory = asyncHandler(async (req, res) => {
-  const { employeeEmail, year, page, size, sortBy, direction } = req.query;
-  try {
-    const response = await axios.get(`${env.SPRING_BOOT_API}/api/leaves/history`, {
-      params: { employeeEmail,year,page, size, sortBy, direction },
-      headers: { Authorization: req.headers.authorization },
-    });
-    res.status(constants.status.OK).json(response.data);
-  } catch (error) {
-    handleAxiosError(error, res);
-  }
-});->leave controller node
- 
-router.get('/history', authMiddleware, validateHistoryQuery, getLeaveHistory);->route
- 
-@GetMapping("/history")
-    public Page<LeaveRequest> getLeaveHistory(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(required = false) Integer year, // Added year parameter
-            HttpServletRequest request) {
-        String email = (String) request.getAttribute("email");
-        Pageable pageable = PageRequest.of(page, size);
-        return leaveService.getLeaveHistory(email, pageable, year);
-    }->spring-leaveController
- 
-public Page<LeaveRequest> getLeaveHistory(String email, Pageable pageable, Integer year) {
-        logger.info("Fetching leave history for user: {} with year: {}", email, year);
-        Page<LeaveRequest> leaveRequests = leaveRequestRepository.findByUserEmailOrderByStartDateDesc(email, pageable);
-        if (year != null) {
-            List<LeaveRequest> filteredLeaves = leaveRequests.getContent().stream()
-                    .filter(leave -> leave.getStartDate().getYear() == year)
-                    .collect(Collectors.toList());
-            return new PageImpl<>(filteredLeaves, pageable, filteredLeaves.size());
-        }
-        return leaveRequests;
-    }->leaveServiceImpl
- 
