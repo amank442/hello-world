@@ -1,9 +1,6 @@
-// actions/leaveActions.js
-import axios from 'axios';
-
 export const fetchLeaveHistory = (token, year, page = 0, size = 10) => async (dispatch) => {
   dispatch({ type: 'FETCH_HISTORY_REQUEST' });
-
+ 
   try {
     const response = await axios.get(`http://localhost:5000/api/leaves/history`, {
       params: { year, page, size },
@@ -11,7 +8,7 @@ export const fetchLeaveHistory = (token, year, page = 0, size = 10) => async (di
         Authorization: `Bearer ${token}`,
       },
     });
-
+ 
     dispatch({
       type: 'FETCH_HISTORY_SUCCESS',
       payload: response.data,
@@ -22,4 +19,5 @@ export const fetchLeaveHistory = (token, year, page = 0, size = 10) => async (di
       payload: error.response?.data?.error || 'Failed to fetch history',
     });
   }
-};
+};-> from frontend(thunk)
+ 
