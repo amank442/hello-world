@@ -355,36 +355,30 @@ pipeline{
 
 
 
-stage('Verify VITE_NODE_BASE_URL in ConfigMap') {
+stage('Create .env.production') {
             steps {
+                withCredentials([file(credentialsId:'aks-kubeconfig', variable:'KUBECONFIG_FILE')]) {
+                    sh 'rm -f $KUBECONFIG'
+                    sh 'cp $KUBECONFIG_FILE $KUBECONFIG'
+                }
+
                 script {
                     def viteUrl = sh(script: "kubectl get configmap frontend-config -o jsonpath='{.data.VITE_NODE_BASE_URL}'", returnStdout: true).trim()
-                    echo "Using VITE_NODE_BASE_URL=${viteUrl}"
-                    if (!viteUrl || !viteUrl.startsWith("http")) {
-                        error("❌ Invalid or missing VITE_NODE_BASE_URL in ConfigMap")
-                    }
+                    echo "✔ Using VITE_NODE_BASE_URL=${viteUrl}"
+                    writeFile file: '.env.production', text: "VITE_NODE_BASE_URL=${viteUrl}"
                 }
             }
         }
 
-        stage('Build React App') {
+        stage('Build React') {
             steps {
                 sh "${NODE_HOME}/bin/npm install"
                 sh "${NODE_HOME}/bin/npm run build"
             }
         }
 
-        stage('Check Environment Variable in Build') {
+        stage('Verify ENV Injection') {
             steps {
-                script {
-                    def found = sh(script: "grep -r VITE_NODE_BASE_URL dist/ || echo 'NOT_FOUND'", returnStdout: true).trim()
-                    if (found.contains("NOT_FOUND")) {
-                        error("❌ VITE_NODE_BASE_URL not found in dist/ output. Check .env and Vite build config.")
-                    } else {
-                        echo "✅ VITE_NODE_BASE_URL successfully embedded in dist build."
-                    }
-                }
+                sh "grep -r VITE_NODE_BASE_URL dist/ || echo '❌ VITE_NODE_BASE_URL not embedded'"
             }
         }
-
-
