@@ -354,18 +354,18 @@ pipeline{
 
 
 
-
-stage('Create .env.production') {
+stage('Inject ENV from ConfigMap') {
             steps {
-                withCredentials([file(credentialsId:'aks-kubeconfig', variable:'KUBECONFIG_FILE')]) {
-                    sh 'rm -f $KUBECONFIG'
-                    sh 'cp $KUBECONFIG_FILE $KUBECONFIG'
-                }
-
                 script {
-                    def viteUrl = sh(script: "kubectl get configmap frontend-config -o jsonpath='{.data.VITE_NODE_BASE_URL}'", returnStdout: true).trim()
-                    echo "✔ Using VITE_NODE_BASE_URL=${viteUrl}"
+                    def viteUrl = sh(
+                        script: "kubectl get configmap frontend-config -o jsonpath='{.data.VITE_NODE_BASE_URL}'",
+                        returnStdout: true
+                    ).trim()
+                    echo "✅ VITE_NODE_BASE_URL from ConfigMap: ${viteUrl}"
+
+                    // Write to .env.production file (used by Vite build)
                     writeFile file: '.env.production', text: "VITE_NODE_BASE_URL=${viteUrl}"
+                    sh 'cat .env.production'
                 }
             }
         }
@@ -373,12 +373,22 @@ stage('Create .env.production') {
         stage('Build React') {
             steps {
                 sh "${NODE_HOME}/bin/npm install"
-                sh "${NODE_HOME}/bin/npm run build"
+                // Vite uses .env.production automatically with --mode
+                sh "${NODE_HOME}/bin/npm run build -- --mode production"
             }
         }
 
         stage('Verify ENV Injection') {
             steps {
-                sh "grep -r VITE_NODE_BASE_URL dist/ || echo '❌ VITE_NODE_BASE_URL not embedded'"
+                script {
+                    def injected = sh(
+                        script: "grep -r VITE_NODE_BASE_URL dist/ || echo '❌ NOT injected'",
+                        returnStdout: true
+                    )
+                    echo "${injected}"
+                    if (injected.contains('❌ NOT injected')) {
+                        error("❌ VITE_NODE_BASE_URL not embedded. Check Vite config/env usage.")
+                    }
+                }
             }
         }
