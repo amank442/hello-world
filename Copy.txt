@@ -1,394 +1,114 @@
-frontend deploymnet
-
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: frontend-deployment
-spec:
-  selector:
-    matchLabels:
-      app: vite-frontend
-  replicas: 1
-  template:
-    metadata:
-      labels:
-        app: vite-frontend
-    spec:
-      containers:
-      - name: vite-frontend
-        image: cicdmicrosvc1-d4g7c6aehxc5amfa.azurecr.io/omm-frontend:tag
-        ports:
-        - containerPort: 80
-        envFrom:
-        - configMapRef:
-            name: frontend-config
----
-
-apiVersion: v1
-kind: Service
-metadata:
-  name: frontend-service
-spec:
-  selector:
-    app: vite-frontend
-  type: ClusterIP
-  ports:
-  - protocol: TCP
-    port: 80
-    targetPort: 80
-
-
-frontend config
-
-kind: ConfigMap
-apiVersion: v1
-metadata:
-  name: frontend-config
-data:
-  VITE_NODE_BASE_URL: http://node-service.default.svc.cluster.local:3000
-
-
-ingresss 
-
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: full-stack-ingress
-  annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
-spec:
-  ingressClassName: nginx
-  rules:
-  - http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: frontend-service
-            port:
-              number: 80
-
-
-node deployment
-
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: node-backend
-spec:
-  selector:
-    matchLabels:
-      app: node
-  replicas: 1
-  template:
-    metadata:
-      labels:
-        app: node
-    spec:
-      containers:
-      - name: node-backend
-        image: cicdmicrosvc1-d4g7c6aehxc5amfa.azurecr.io/omm-node:tag
-        ports:
-        - containerPort: 3000
-        envFrom:
-        - secretRef:
-            name: node-secret
-        - configMapRef:
-            name: node-config
----
-
-apiVersion: v1
-kind: Service
-metadata:
-  name: node-service
-spec:
-  selector:
-    app: node
-  type: ClusterIP
-  ports:
-  - protocol: TCP
-    port: 3000
-    targetPort: 3000
-
-
-node config 
-
-kind: ConfigMap
-apiVersion: v1
-metadata:
-  name: node-config
-data:
-  SPRING_BASE_URL: http://spring-service.default.svc.cluster.local:8081
-
-
-spring deployment
-
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: omm-spring-deployments
-spec:
-  selector:
-    matchLabels:
-      app: spring
-  replicas: 1
-  template:
-    metadata:
-      labels:
-        app: spring
-    spec:
-      containers:
-      - name: spring-boot
-        image: cicdmicrosvc1-d4g7c6aehxc5amfa.azurecr.io/omm-spring:tag
-        ports:
-        - containerPort: 8081
-        # env:
-
-        # - name: USER
-        #   valueFrom:
-        #     secretKeyRef:
-        #       name: spring-db-secret
-        #       key: DB_USERNAME
-
-        # - name: PASSWORD
-        #   valueFrom:
-        #     secretKeyRef:
-        #       name: spring-db-secret
-        #       key: DB_PASSWORD
-
-        # - name: URL
-        #   valueFrom:
-        #     configMapKeyRef:
-        #       name: spring-db-config
-        #       key: DB_URL
-
-        # - name: DRIVER
-        #   valueFrom:
-        #     configMapKeyRef:
-        #       name: spring-db-config
-        #       key: DB_DRIVER
-
-        # - name: DIALECT
-        #   valueFrom:
-        #     configMapKeyRef:
-        #       name: spring-db-config
-        #       key: JPA_DIALECT
-
-        # - name: SHOW-SQL
-        #   valueFrom:
-        #     configMapKeyRef:
-        #       name: spring-db-config
-        #       key: JPA_SHOW_SQL
-
-        # - name: HBM2DDL
-        #   valueFrom:
-        #     configMapKeyRef:
-        #       name: spring-db-config
-        #       key: JPA_HBM2DDL_AUTO
-
-
-        envFrom:
-        - configMapRef:
-            name: spring-db-config
-        - secretRef:
-            name: spring-db-secret
----
-
-apiVersion: v1
-kind: Service
-metadata:
-  name: spring-service
-spec:
-  selector:
-    app: spring
-  type: ClusterIP
-  ports:
-  - protocol: TCP
-    port: 8081
-    targetPort: 8081
-
-spring config
-
-kind: ConfigMap
-apiVersion: v1
-metadata:
-  name: spring-db-config
-data:
-  DB_URL: jdbc:mysql://springsql.mysql.database.azure.com:3306/dbs?useSSL=TRUE
-  DB_DRIVER: com.mysql.cj.jdbc.Driver
-  JPA_DIALECT: org.hibernate.dialect.MySQLDialect
-  JPA_SHOW_SQL: 'FALSE'
-  JPA_HBM2DDL_AUTO: update
-  PORT: "8081"
-
-
-spring secret
-
-apiVersion: v1
-kind: Secret
-metadata:
-  name: spring-db-secret
-type: Opaque
-data:
-  DB_USERNAME: S2FtYW4=
-  DB_PASSWORD: QW1hbkAzMTQ2
-
-
-
-
-
-
-pipeline{
-    agent any
-    
-     parameters {
-        string(name: 'SERVICE_NAME', defaultValue: 'omm-frontend' , description : 'Image / repository name')
-        string(name: 'IMAGE_TAG', defaultValue: "" , description : 'Docker Image Tag')
-    }
-        
-        environment {
-        NODE_HOME = tool name: 'NODEJS 20'
-        DISABLE_ESLINT_PLUGIN = 'true'
-     Local_Image = "${params.SERVICE_NAME}:${params.IMAGE_TAG != '' ? params.IMAGE_TAG : BUILD_NUMBER}"
-     ACR_NAME = 'cicdmicrosvc1-d4g7c6aehxc5amfa'
-      KUBECONFIG = "${WORKSPACE}/kubeconfig"
-      IMAGE_TAG = "${BUILD_NUMBER}"
-     ACR_IMAGE = "${ACR_NAME}.azurecr.io/${params.SERVICE_NAME}:${params.IMAGE_TAG != '' ? params.IMAGE_TAG : BUILD_NUMBER}"
-       
-       
-       
-       
-       
-    }
-        
-        
-        
-        
-        stages {
-        stage('Checkout code'){
-            steps {
-                git url: 'https://github.com/amank442/react-frontend.git',
-                branch: 'main'
-            }
-        }
-        
-        stage('Build React'){
-            steps{
-             
-                     sh "${NODE_HOME}/bin/npm install"
-                    sh "${NODE_HOME}/bin/npm run build"
-                
-            }
-        }
-        
-          stage('Docker Build'){
-            steps{
-                sh "docker build -f Dockerfile -t ${Local_Image} ."
-            }
-        }
-        
-         stage('Triviy Scan'){
-            steps{
-                sh """ trivy image --timeout 25m --format table --severity CRITICAL,HIGH ${Local_Image} """
-            }
-        }
-        
-         stage('Tag for ACR'){
-            steps{
-                sh """ docker tag ${Local_Image} ${ACR_IMAGE} """
-            }
-        }
-        
-           stage('Login to ACR'){
-            steps{
-                withCredentials([usernamePassword(credentialsId:'acr-creds',usernameVariable:'USERNAME',passwordVariable:'PASSWORD')]){
-                    sh """ docker login ${ACR_NAME}.azurecr.io -u ${USERNAME} -p ${PASSWORD} """
-                }
-            }
-        }
-        
-              stage('Push to ACR'){
-            steps {
-                sh 'docker push ${ACR_IMAGE}'
-            }
-        }
-        
-            
-        stage('Prepare K8s'){
-            steps{
-                withCredentials([file(credentialsId:'aks-kubeconfig',variable:'KUBECONFIG_FILE')]){
-                    sh 'rm -f $KUBECONFIG'
-                    sh 'cp $KUBECONFIG_FILE $KUBECONFIG'
-                }
-            }
-        }
-        
-        stage('Deploy to AKS'){
-            steps{
-                script{
-                    sh "sed -i \"s/tag/${IMAGE_TAG}/g\" K8s/frontend-deployment.yaml"
-                    
-                }
-                sh """
-               
-                kubectl apply -f K8s/frontend-config.yaml
-                 kubectl apply -f K8s/frontend-deployment.yaml
-                 kubectl apply -f K8s/frontend-ingress.yaml
-                
-                """
-            }
-        }
-        
-        
-        }
+/* Reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f5f5f5;
+  color: #333;
+}
 
+/* Layout */
+.container {
+  display: flex;
+  height: 100vh;
+}
 
+/* Sidebar */
+.sidebar {
+  width: 220px;
+  background-color: #ffffff;
+  padding: 20px;
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.05);
+}
 
+/* Top Bar */
+.topbar {
+  height: 60px;
+  background-color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 30px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
 
+/* Main content */
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
 
+/* Page Title */
+.page-title {
+  padding: 20px 30px;
+  font-size: 24px;
+  font-weight: 600;
+}
 
+/* Employee Table */
+.employee-table {
+  width: 95%;
+  margin: 0 auto;
+  border-collapse: collapse;
+  background-color: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+}
 
+.employee-table thead {
+  background-color: #f0f0f0;
+  text-align: left;
+}
 
+.employee-table th,
+.employee-table td {
+  padding: 12px 16px;
+}
 
+.employee-table tbody tr {
+  border-bottom: 1px solid #e0e0e0;
+}
 
-stage('Inject ENV from ConfigMap') {
-            steps {
-                script {
-                    def viteUrl = sh(
-                        script: "kubectl get configmap frontend-config -o jsonpath='{.data.VITE_NODE_BASE_URL}'",
-                        returnStdout: true
-                    ).trim()
-                    echo "✅ VITE_NODE_BASE_URL from ConfigMap: ${viteUrl}"
+.employee-table tbody tr:last-child {
+  border-bottom: none;
+}
 
-                    // Write to .env.production file (used by Vite build)
-                    writeFile file: '.env.production', text: "VITE_NODE_BASE_URL=${viteUrl}"
-                    sh 'cat .env.production'
-                }
-            }
-        }
+.employee-table img {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+}
 
-        stage('Build React') {
-            steps {
-                sh "${NODE_HOME}/bin/npm install"
-                // Vite uses .env.production automatically with --mode
-                sh "${NODE_HOME}/bin/npm run build -- --mode production"
-            }
-        }
+/* Actions */
+.actions {
+  display: flex;
+  gap: 10px;
+}
 
-        stage('Verify ENV Injection') {
-            steps {
-                script {
-                    def injected = sh(
-                        script: "grep -r VITE_NODE_BASE_URL dist/ || echo '❌ NOT injected'",
-                        returnStdout: true
-                    )
-                    echo "${injected}"
-                    if (injected.contains('❌ NOT injected')) {
-                        error("❌ VITE_NODE_BASE_URL not embedded. Check Vite config/env usage.")
-                    }
-                }
-            }
-        }
+.actions button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+/* Add Employee Button */
+.add-employee {
+  margin: 20px 30px;
+  padding: 10px 20px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.add-employee:hover {
+  background-color: #0056b3;
+}
