@@ -1,97 +1,87 @@
-/* Body background and base theme */
+/* AddEmployee.css */
+
 body {
-  background-image: url('https://images.unsplash.com/photo-1612831810596-c88e9827a930?auto=format&fit=crop&w=1950&q=80');
-  background-size: cover;
-  background-position: center;
-  background-attachment: fixed;
-  color: #f0f0f0;
-  font-family: 'Segoe UI', sans-serif;
-  min-height: 100vh;
-  margin: 0;
+  background: linear-gradient(to right, #f4f6fa, #e9edf5);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #333;
 }
 
-/* Glassmorphism card */
-.glass-card {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 20px;
-  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.2);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.18);
+.container {
+  max-width: 960px;
+  margin: auto;
   padding: 2rem;
-  color: #ffffff;
 }
 
-/* Gradient heading */
+.card {
+  background-color: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 16px;
+  padding: 2rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+}
+
 h3.text-center {
-  background: linear-gradient(90deg, #00c6ff, #0072ff);
+  font-size: 24px;
+  font-weight: 700;
+  background: linear-gradient(to right, #4a90e2, #007bff);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  font-weight: bold;
 }
 
-/* Input and select styling */
+.form-label {
+  font-weight: 500;
+  color: #555;
+}
+
 .form-control,
-.form-select,
-textarea {
-  background-color: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  color: #ffffff;
-  font-size: 0.95rem;
+.form-select {
+  font-size: 14px;
+  padding: 8px 12px;
   border-radius: 8px;
+  border: 1px solid #ccc;
   transition: all 0.3s ease;
-}
-
-.form-control::placeholder,
-textarea::placeholder {
-  color: #bbbbbb;
+  background-color: #fff;
+  color: #333;
 }
 
 .form-control:focus,
-.form-select:focus,
-textarea:focus {
+.form-select:focus {
   outline: none;
-  box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
-  transform: scale(1.02);
-  border-color: #00c6ff;
-  background-color: rgba(255, 255, 255, 0.1);
+  border-color: #007bff;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
+  background-color: #fdfdfd;
 }
 
-/* Smaller input field size */
-.form-control,
-.form-select,
-textarea {
-  padding: 8px 12px;
+textarea.form-control {
+  resize: none;
 }
 
-/* Add button animation */
-button[type="submit"] {
-  background-color: #0072ff;
-  color: #fff;
-  font-weight: 600;
-  font-size: 16px;
-  border-radius: 10px;
+.alert {
+  font-size: 14px;
+  border-radius: 8px;
+}
+
+.btn-primary {
+  background-color: #007bff;
   border: none;
-  padding: 10px 20px;
-  width: 140px;
-  box-shadow: 0 4px 12px rgba(0, 114, 255, 0.4);
+  font-weight: 600;
   transition: all 0.3s ease;
-  cursor: pointer;
+  animation: pulse 2s infinite;
 }
 
-button[type="submit"]:hover {
+.btn-primary:hover {
   background-color: #0056b3;
   transform: scale(1.05);
-  box-shadow: 0 6px 18px rgba(0, 114, 255, 0.6);
 }
 
-/* Responsive spacing */
-@media (max-width: 576px) {
-  .glass-card {
-    padding: 1rem;
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(0, 123, 255, 0.5);
   }
-
-  button[type="submit"] {
-    width: 100%;
+  70% {
+    box-shadow: 0 0 0 10px rgba(0, 123, 255, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(0, 123, 255, 0);
   }
 }
