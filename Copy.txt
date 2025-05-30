@@ -1,14 +1,17 @@
 import React, { useState } from 'react';
-import '../css/AddEmployee.css'
+import '../css/AddEmployee.css';
 import { useDispatch, useSelector } from 'react-redux';
 import { addUser } from '../redux/actions/userActions';
-const departments = ['HR', 'Development', 'Marketing', 'Finance','Production','Devops',''];
+import { getToken } from '../redux/selectors'; // <-- Make sure this path is correct
+
+const departments = ['HR', 'Development', 'Marketing', 'Finance', 'Production', 'Devops'];
 const states = ['Karnataka', 'Maharashtra', 'Delhi', 'Tamil Nadu'];
-const dispatch = useDispatch();
-const token = useSelector(getToken);
- 
+
 const AddEmployee = () => {
-  const [userData, setUserData]= useState({
+  const dispatch = useDispatch();
+  const token = useSelector(getToken);
+
+  const [employee, setEmployee] = useState({
     email: '',
     firstName: '',
     lastName: '',
@@ -23,57 +26,57 @@ const AddEmployee = () => {
     password: '',
     confirmPassword: '',
   });
- 
+
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
- 
- const handleChange = (e) => {
-  const { name, value } = e.target;
-  setEmployee({
-    ...employee,
-    [name]: value,
-  });
-};
- 
- 
-  const handleSubmit = (e) => {
+  const [addUserError, setAddUserError] = useState(null);
+  const [addUserLoading, setAddUserLoading] = useState(false);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setEmployee({
+      ...employee,
+      [name]: value,
+    });
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setSuccess('');
- 
+    setAddUserError(null);
+
     if (employee.password !== employee.confirmPassword) {
       setError('Passwords do not match');
       return;
     }
- 
-    // TODO: dispatch to backend or redux
-    console.log('Employee data:', employee);
-    setSuccess('Employee added successfully!');
-    setEmployee({
-      email: '',
-      firstName: '',
-      lastName: '',
-      department: '',
-      mobile: '',
-      country: '',
-      state: '',
-      city: '',
-      dateOfJoining: '',
-      photo: '',
-      address: '',
-      password: '',
-      confirmPassword: '',
-    });
-  };
-  const [addUserError, setAddUserError] = useState(null);
-  const [addUserLoading, setAddUserLoading] = useState(false);
-  const handleAddUser = async () => {
-    setAddUserError(null);
+
+    const userData = {
+      email: employee.email,
+      password: employee.password,
+      role: 'EMPLOYEE',
+      ...employee, // You can customize this object as per your API
+    };
+
     setAddUserLoading(true);
     try {
       await dispatch(addUser(userData, token));
-      alert('User added successfully');
-      setUserData({ email: '', password: '', role: 'EMPLOYEE' });
+      setSuccess('Employee added successfully!');
+      setEmployee({
+        email: '',
+        firstName: '',
+        lastName: '',
+        department: '',
+        mobile: '',
+        country: '',
+        state: '',
+        city: '',
+        dateOfJoining: '',
+        photo: '',
+        address: '',
+        password: '',
+        confirmPassword: '',
+      });
     } catch (error) {
       const message = error.message || 'Failed to add user';
       console.error('Error adding user:', message);
@@ -82,35 +85,32 @@ const AddEmployee = () => {
       setAddUserLoading(false);
     }
   };
- 
+
   const today = new Date().toISOString().split('T')[0];
- 
+
   return (
     <div className="container mt-5 mb-5">
       <div className="card shadow-lg p-4 rounded-4">
         <h3 className="text-center mb-4">Add Employee</h3>
         <form onSubmit={handleSubmit}>
           <div className="row g-3">
+            {/* All input fields use employee state now */}
             <div className="col-md-6">
               <label className="form-label">Email ID</label>
               <input type="email" className="form-control" name="email" value={employee.email} onChange={handleChange} required />
             </div>
- 
             <div className="col-md-6">
               <label className="form-label">Mobile No</label>
               <input type="text" className="form-control" name="mobile" value={employee.mobile} onChange={handleChange} required />
             </div>
- 
             <div className="col-md-6">
               <label className="form-label">First Name</label>
               <input type="text" className="form-control" name="firstName" value={employee.firstName} onChange={handleChange} required />
             </div>
- 
             <div className="col-md-6">
               <label className="form-label">Last Name</label>
               <input type="text" className="form-control" name="lastName" value={employee.lastName} onChange={handleChange} required />
             </div>
- 
             <div className="col-md-6">
               <label className="form-label">Department</label>
               <select className="form-select" name="department" value={employee.department} onChange={handleChange} required>
@@ -120,12 +120,10 @@ const AddEmployee = () => {
                 ))}
               </select>
             </div>
- 
             <div className="col-md-6">
               <label className="form-label">Country</label>
               <input type="text" className="form-control" name="country" value={employee.country} onChange={handleChange} required />
             </div>
- 
             <div className="col-md-6">
               <label className="form-label">State</label>
               <select className="form-select" name="state" value={employee.state} onChange={handleChange} required>
@@ -135,43 +133,31 @@ const AddEmployee = () => {
                 ))}
               </select>
             </div>
- 
             <div className="col-md-6">
               <label className="form-label">City</label>
               <input type="text" className="form-control" name="city" value={employee.city} onChange={handleChange} required />
             </div>
- 
             <div className="col-md-6">
               <label className="form-label">Date of Joining</label>
-              <input
-                type="date"
-                className="form-control"
-                name="dateOfJoining"
-                value={employee.dateOfJoining}
-                min={today}
-                onChange={handleChange}
-                required
-              />
+              <input type="date" className="form-control" name="dateOfJoining" value={employee.dateOfJoining} min={today} onChange={handleChange} required />
             </div>
             <div className="col-12">
               <label className="form-label">Address</label>
               <textarea className="form-control" name="address" value={employee.address} onChange={handleChange} rows="3" required></textarea>
             </div>
- 
             <div className="col-md-6">
               <label className="form-label">Password</label>
               <input type="password" className="form-control" name="password" value={employee.password} onChange={handleChange} required />
             </div>
- 
             <div className="col-md-6">
               <label className="form-label">Confirm Password</label>
               <input type="password" className="form-control" name="confirmPassword" value={employee.confirmPassword} onChange={handleChange} required />
             </div>
           </div>
- 
+
           {error && <div className="alert alert-danger mt-3">{error}</div>}
           {success && <div className="alert alert-success mt-3">{success}</div>}
- 
+
           <div className="d-flex justify-content-center mt-4">
             <button
               type="submit"
@@ -193,22 +179,21 @@ const AddEmployee = () => {
                 e.currentTarget.style.backgroundColor = '#0d6efd';
                 e.currentTarget.style.boxShadow = '0 4px 8px rgba(0, 123, 255, 0.4)';
               }}
-             onClick={handleAddUser}
-             disabled={addUserLoading}
+              disabled={addUserLoading}
             >
-             {addUserLoading ? 'Adding...' : 'Add User'}
+              {addUserLoading ? 'Adding...' : 'Add User'}
             </button>
-            {addUserError && (
-              <div className="alert alert-danger mt-3" role="alert">
-                Error: {addUserError}
-              </div>
-            )}
+          </div>
+
+          {addUserError && (
+            <div className="alert alert-danger mt-3" role="alert">
+              Error: {addUserError}
             </div>
+          )}
         </form>
       </div>
     </div>
   );
 };
- 
+
 export default AddEmployee;
- 
