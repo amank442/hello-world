@@ -1,115 +1,98 @@
-package com.example.ems.controller;
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Montserrat', sans-serif;
+  background: linear-gradient(to right, #74ebd5, #ACB6E5);
+}
 
-import com.example.ems.entity.LeaveRequest;
-import com.example.ems.entity.User;
-import com.example.ems.exception.LeaveValidationException;
-import com.example.ems.exception.ResourceNotFoundException;
-import com.example.ems.repository.UserRepository;
-import com.example.ems.service.LeaveService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.web.bind.annotation.*;
+/* Container holding the form */
+.container {
+  flex-grow: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 
-import javax.servlet.http.HttpServletRequest;
-import java.time.LocalDate;
-import java.util.List;
+/* Card appearance */
+.card {
+  background-color: #fff;
+  border-radius: 30px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  padding: 2rem;
+}
 
-@RestController
-@RequestMapping("/api/leaves")
-public class LeaveController {
+/* Heading */
+.text-primary {
+  color: #2da0a8 !important;
+}
 
-    private static final Logger logger = LoggerFactory.getLogger(LeaveController.class);
+/* Labels */
+.form-label {
+  font-weight: 500;
+  margin-bottom: 5px;
+}
 
-    @Autowired
-    private LeaveService leaveService;
+/* Input fields */
+.form-control {
+  background-color: #eee;
+  border: none;
+  padding: 10px 15px;
+  font-size: 14px;
+  border-radius: 8px;
+  outline: none;
+  box-shadow: none;
+  transition: box-shadow 0.3s ease;
+}
 
-    @Autowired
-    private UserRepository userRepository;
+.form-control:focus {
+  box-shadow: 0 0 0 2px #2da0a8aa;
+}
 
-    //  1. Apply for leave
-    @PostMapping("/apply")
-    public LeaveRequest applyLeave(@RequestBody LeaveRequest leaveRequest, HttpServletRequest request) {
-        String email = (String) request.getAttribute("email");
-        logger.info("Applying leave for user: {}", email);
-        return leaveService.applyLeave(email, leaveRequest);
-    }
+/* Login button */
+.btn-primary {
+  background-color: #2da0a8;
+  border-color: #2da0a8;
+  font-weight: 600;
+  text-transform: uppercase;
+  padding: 10px;
+  font-size: 14px;
+  border-radius: 8px;
+  transition: background-color 0.3s ease;
+}
 
-    //  2. Approve leave by ID
-    @PutMapping("/approve/{id}")
-    public LeaveRequest approveLeave(@PathVariable Long id) {
-        logger.info("Approving leave with ID: {}", id);
-        return leaveService.approveLeave(id);
-    }
+.btn-primary:hover {
+  background-color: #23858a;
+  border-color: #23858a;
+}
 
-    //  3. Reject leave by ID
-    @PutMapping("/reject/{id}")
-    public LeaveRequest rejectLeave(@PathVariable Long id) {
-        logger.info("Rejecting leave with ID: {}", id);
-        return leaveService.rejectLeave(id);
-    }
+/* Full width button */
+.w-100 {
+  width: 100%;
+}
 
-    //  4. Get all leaves for admin
-    @GetMapping("/all")
-    public List<LeaveRequest> getAllLeaves(HttpServletRequest request) {
-        String email = (String) request.getAttribute("email");
-        logger.info("Fetching all leave requests for admin: {}", email);
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + email));
-        if (!user.getRole().equals("ADMIN")) {
-            logger.error("User {} is not authorized to access all leave requests", email);
-            throw new LeaveValidationException("Only admins can access all leave requests.");
-        }
-        return leaveService.getAllLeaves();
-    }
+/* Error alert box */
+.alert-danger {
+  background-color: #fceaea;
+  color: #c0392b;
+  border: none;
+  border-radius: 5px;
+  text-align: center;
+  padding: 10px;
+  margin-top: 1rem;
+}
 
-    //  5. Get current user's leave history
-    @GetMapping("/history")
-    public List<LeaveRequest> getLeaveHistory(HttpServletRequest request) {
-        String email = (String) request.getAttribute("email");
-        logger.info("Fetching leave history for user: {}", email);
-        return leaveService.getLeaveHistory(email);
-    }
+/* Header and Footer Styling */
+header {
+  background-color: #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 1rem;
+  text-align: center;
+}
 
-    //  6. Get all pending leave requests (admin)
-    @GetMapping("/pending")
-    public List<LeaveRequest> getPendingLeaves(HttpServletRequest request) {
-        String email = (String) request.getAttribute("email");
-        logger.info("Fetching pending leave requests for admin: {}", email);
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + email));
-        if (!user.getRole().equals("ADMIN")) {
-            logger.error("User {} is not authorized to access pending leave requests", email);
-            throw new LeaveValidationException("Only admins can access pending leave requests.");
-        }
-        return leaveService.getPendingLeaves();
-    }
-
-    //  7. Get leaves applied in a date range (admin)
-    @GetMapping("/applied-range")
-    public List<LeaveRequest> getLeavesByDateRange(
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
-            HttpServletRequest request) {
-
-        String email = (String) request.getAttribute("email");
-        logger.info("Fetching leave applications for admin: {} between {} and {}", email, startDate, endDate);
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + email));
-
-        if (!user.getRole().equals("ADMIN")) {
-            logger.error("User {} is not authorized to access leave applications by date range", email);
-            throw new LeaveValidationException("Only admins can access leave applications by date range.");
-        }
-        return leaveService.getLeavesByDateRange(startDate, endDate);
-    }
-
-    //  8. Get current user's currently active leave requests
-    @GetMapping("/current")
-    public List<LeaveRequest> getCurrentLeaves(HttpServletRequest request) {
-        String email = (String) request.getAttribute("email");
-        logger.info("Fetching current leaves for user: {}", email);
-        return leaveService.getCurrentLeaves(email);
-    }
+footer {
+  background-color: #f8f9fa;
+  text-align: center;
+  color: #6c757d;
+  padding: 1rem 0;
+  font-size: 14px;
 }
