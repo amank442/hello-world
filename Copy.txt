@@ -28,7 +28,7 @@ public class LeaveController {
     @Autowired
     private UserRepository userRepository;
 
-    // 🟢 1. Apply for leave
+    //  1. Apply for leave
     @PostMapping("/apply")
     public LeaveRequest applyLeave(@RequestBody LeaveRequest leaveRequest, HttpServletRequest request) {
         String email = (String) request.getAttribute("email");
@@ -36,21 +36,21 @@ public class LeaveController {
         return leaveService.applyLeave(email, leaveRequest);
     }
 
-    // 🟢 2. Approve leave by ID
+    //  2. Approve leave by ID
     @PutMapping("/approve/{id}")
     public LeaveRequest approveLeave(@PathVariable Long id) {
         logger.info("Approving leave with ID: {}", id);
         return leaveService.approveLeave(id);
     }
 
-    // 🟢 3. Reject leave by ID
+    //  3. Reject leave by ID
     @PutMapping("/reject/{id}")
     public LeaveRequest rejectLeave(@PathVariable Long id) {
         logger.info("Rejecting leave with ID: {}", id);
         return leaveService.rejectLeave(id);
     }
 
-    // 🟢 4. Get all leaves for admin
+    //  4. Get all leaves for admin
     @GetMapping("/all")
     public List<LeaveRequest> getAllLeaves(HttpServletRequest request) {
         String email = (String) request.getAttribute("email");
@@ -64,7 +64,7 @@ public class LeaveController {
         return leaveService.getAllLeaves();
     }
 
-    // 🟢 5. Get current user's leave history
+    //  5. Get current user's leave history
     @GetMapping("/history")
     public List<LeaveRequest> getLeaveHistory(HttpServletRequest request) {
         String email = (String) request.getAttribute("email");
@@ -72,7 +72,7 @@ public class LeaveController {
         return leaveService.getLeaveHistory(email);
     }
 
-    // 🟢 6. Get all pending leave requests (admin)
+    //  6. Get all pending leave requests (admin)
     @GetMapping("/pending")
     public List<LeaveRequest> getPendingLeaves(HttpServletRequest request) {
         String email = (String) request.getAttribute("email");
@@ -86,7 +86,7 @@ public class LeaveController {
         return leaveService.getPendingLeaves();
     }
 
-    // ✅ 7. Get leaves applied in a date range (admin)
+    //  7. Get leaves applied in a date range (admin)
     @GetMapping("/applied-range")
     public List<LeaveRequest> getLeavesByDateRange(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
@@ -105,7 +105,7 @@ public class LeaveController {
         return leaveService.getLeavesByDateRange(startDate, endDate);
     }
 
-    // ✅ 8. Get current user's currently active leave requests
+    //  8. Get current user's currently active leave requests
     @GetMapping("/current")
     public List<LeaveRequest> getCurrentLeaves(HttpServletRequest request) {
         String email = (String) request.getAttribute("email");
