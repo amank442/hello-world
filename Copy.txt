@@ -413,4 +413,12 @@ module.exports = {
   getLeavesByDateRange, // Added this
 
 };
+
+
+
+
+
+
+Leave validation error: Only admins can access all leave applications
+Hibernate: select lr1_0.id,lr1_0.category,lr1_0.created_at,lr1_0.end_date,lr1_0.reason,lr1_0.start_date,lr1_0.status,lr1_0.user_id from leave_request lr1_0 limit ?,?
  
