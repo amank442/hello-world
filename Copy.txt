@@ -1,8 +1,10 @@
 helm install sonarqube sonarqube/sonarqube \
   --namespace sonarqube --create-namespace \
+  --set useCommunity=true \
   --set persistence.enabled=true \
   --set postgresql.enabled=true \
   --set postgresql.postgresqlPassword=sonar \
   --set sonarqube.jdbc.username=sonar \
   --set sonarqube.jdbc.password=sonar \
-  --set sonarqube.jdbc.url="jdbc:postgresql://sonarqube-postgresql:5432/sonarqube"
+  --set sonarqube.jdbc.url="jdbc:postgresql://sonarqube-postgresql:5432/sonarqube" \
+  --set monitoring.enabled=false
