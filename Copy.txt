@@ -16,4 +16,11 @@ Error: INSTALLATION FAILED: execution error at (sonarqube/templates/validation.y
  Please provide a passcode either setting "monitoringPasscode" or "monitoringPasscodeSecretName" and "monitoringPasscodeSecretKey"
 
 
+kubectl create namespace sonarqube
+
+kubectl create secret generic sonarqube-monitoring-secret \
+  --from-literal=monitoring-passcode=securepass123 \
+  -n sonarqube
+
+
 
