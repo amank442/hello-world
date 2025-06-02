@@ -10,3 +10,10 @@ helm install sonarqube sonarqube/sonarqube \
   --set monitoring.enabled=false \
   --set monitoringPasscode="securepass123"
 
+
+Error: INSTALLATION FAILED: execution error at (sonarqube/templates/validation.yaml:13:4):
+ ** The values.yaml file is not valid. **
+ Please provide a passcode either setting "monitoringPasscode" or "monitoringPasscodeSecretName" and "monitoringPasscodeSecretKey"
+
+
+
