@@ -85,3 +85,11 @@ sonarqube-sonarqube-0    0/1     Pending   0          4m27s
 kubectl describe pods sonarqube-sonarqube-0
 Error from server (NotFound): pods "sonarqube-sonarqube-0" not found
 
+
+Events:
+  Type     Reason            Age                    From               Message
+  ----     ------            ----                   ----               -------
+  Warning  FailedScheduling  2m30s (x2 over 7m46s)  default-scheduler  0/1 nodes are available: 1 Insufficient memory. preemption: 0/1 nodes are available: 1 No preemption victims found for incoming pod.
+
+
+
