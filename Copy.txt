@@ -1,5 +1,5 @@
 tuhelm install sonarqube sonarqube/sonarqube \
-  --namespace sonarqube --create-namespace \
+  --namespace sonarqube --create-namespace \no
   --set useCommunity=true \
   --set persistence.enabled=true \
   --set postgresql.enabled=true \
@@ -92,4 +92,24 @@ Events:
   Warning  FailedScheduling  2m30s (x2 over 7m46s)  default-scheduler  0/1 nodes are available: 1 Insufficient memory. preemption: 0/1 nodes are available: 1 No preemption victims found for incoming pod.
 
 
+
+
+
+
+helm upgrade --install sonarqube sonarqube/sonarqube \
+  --namespace sonarqube \
+  --create-namespace \
+  --set community.enabled=true \
+  --set persistence.enabled=true \
+  --set postgresql.enabled=true \
+  --set postgresql.postgresqlPassword=sonar \
+  --set sonarqube.jdbc.username=sonar \
+  --set sonarqube.jdbc.password=sonar \
+  --set sonarqube.jdbc.url="jdbc:postgresql://sonarqube-postgresql:5432/sonarqube" \
+  --set monitoringPasscodeSecretName=sonarqube-monitoring-secret \
+  --set monitoringPasscodeSecretKey=monitoring-passcode \
+  --set resources.requests.memory=512Mi \
+  --set resources.requests.cpu=250m \
+  --set resources.limits.memory=1Gi \
+  --set resources.limits.cpu=500m
 
