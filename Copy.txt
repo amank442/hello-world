@@ -1,4 +1,4 @@
-helm install sonarqube sonarqube/sonarqube \
+tuhelm install sonarqube sonarqube/sonarqube \
   --namespace sonarqube --create-namespace \
   --set useCommunity=true \
   --set persistence.enabled=true \
@@ -42,3 +42,26 @@ helm install sonarqube sonarqube/sonarqube \
 
 
 
+
+
+# 1. Create the namespace
+kubectl create namespace sonarqube
+
+# 2. Create secret for monitoring passcode
+kubectl create secret generic sonarqube-monitoring-secret \
+  --from-literal=monitoring-passcode=securepass123 \
+  -n sonarqube
+
+# 3. Install SonarQube Community Edition with correct chart values
+helm install sonarqube sonarqube/sonarqube \
+  --namespace sonarqube \
+  --create-namespace \
+  --set community.enabled=true \
+  --set persistence.enabled=true \
+  --set postgresql.enabled=true \
+  --set postgresql.postgresqlPassword=sonar \
+  --set sonarqube.jdbc.username=sonar \
+  --set sonarqube.jdbc.password=sonar \
+  --set sonarqube.jdbc.url="jdbc:postgresql://sonarqube-postgresql:5432/sonarqube" \
+  --set monitoringPasscodeSecretName=sonarqube-monitoring-secret \
+  --set monitoringPasscodeSecretKey=monitoring-passcode
