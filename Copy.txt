@@ -37,3 +37,8 @@ helm install sonarqube sonarqube/sonarqube \
   --set monitoringPasscodeSecretKey=monitoring-passcode
 
 
+
+ You must choose an 'edition' to install: 'developer' or 'enterprise'. If you want to use SonarQube Community Build, unset 'edition' and set 'community.enabled=true' instead.
+
+
+
