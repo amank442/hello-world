@@ -7,4 +7,6 @@ helm install sonarqube sonarqube/sonarqube \
   --set sonarqube.jdbc.username=sonar \
   --set sonarqube.jdbc.password=sonar \
   --set sonarqube.jdbc.url="jdbc:postgresql://sonarqube-postgresql:5432/sonarqube" \
-  --set monitoring.enabled=false
+  --set monitoring.enabled=false \
+  --set monitoringPasscode="securepass123"
+
