@@ -44,10 +44,10 @@ helm install sonarqube sonarqube/sonarqube \
 
 
 
-# 1. Create the namespace
+
 kubectl create namespace sonarqube
 
-# 2. Create secret for monitoring passcode
+
 kubectl create secret generic sonarqube-monitoring-secret \
   --from-literal=monitoring-passcode=securepass123 \
   -n sonarqube
@@ -65,3 +65,23 @@ helm install sonarqube sonarqube/sonarqube \
   --set sonarqube.jdbc.url="jdbc:postgresql://sonarqube-postgresql:5432/sonarqube" \
   --set monitoringPasscodeSecretName=sonarqube-monitoring-secret \
   --set monitoringPasscodeSecretKey=monitoring-passcode
+
+
+
+
+
+
+
+
+
+
+
+
+testuser@pocvm:~$ kubectl get pods -n sonarqube
+NAME                     READY   STATUS    RESTARTS   AGE
+sonarqube-postgresql-0   1/1     Running   0          4m27s
+sonarqube-sonarqube-0    0/1     Pending   0          4m27s
+
+kubectl describe pods sonarqube-sonarqube-0
+Error from server (NotFound): pods "sonarqube-sonarqube-0" not found
+
