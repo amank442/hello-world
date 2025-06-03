@@ -1,214 +1,110 @@
-/* ✅ Full-width Navbar */
+/* 🌟 Global Navbar Styling */
 .navbar-container {
     background: linear-gradient(to right, #2a5298, #4a90e2);
-    padding: 15px 30px;
-    width: 100%;
+    padding: 12px 24px;
+    width: 100vw;
+    max-width: 100%;
+    overflow: hidden;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
- 
-/* ✅ Navbar content */
+
+/* 🔷 Navbar Inner Content */
 .navbar-content {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     width: 100%;
 }
- 
-/* ✅ Brand styling */
+
+/* 🔷 Brand */
 .navbar-brand {
-    font-size: 22px;
+    font-size: 24px;
     font-weight: bold;
     color: white;
+    letter-spacing: 1px;
 }
- 
-/* ✅ Navbar toggle button */
+
+/* 🔷 Toggle Button (For future use in mobile) */
 .navbar-toggle {
     background: none;
     border: none;
     cursor: pointer;
+    display: none; /* Hide toggle by default */
 }
- 
+
 .navbar-toggler-icon {
     color: white;
     font-size: 24px;
 }
- 
-/* ✅ Navbar menu */
+
+/* 🔷 Menu */
 .navbar-menu {
     display: flex;
+    align-items: center;
     justify-content: space-between;
     width: 100%;
 }
- 
- 
+
+/* 🔷 Navigation Links */
 .navbar-links {
-   
-  display: flex;
-  flex-wrap: wrap; /* ✅ Prevents items from breaking layout */
-  gap: 15px;
-  justify-content: center;
- 
- 
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
 }
- 
+
 .nav-item {
     list-style: none;
 }
- 
+
 .nav-link.custom-link {
     font-size: 16px;
     color: white;
     padding: 8px 14px;
     text-decoration: none;
-    transition: all 0.3s ease-in-out;
+    border-radius: 6px;
+    transition: background 0.3s ease;
 }
- 
+
 .nav-link.custom-link:hover {
     background: rgba(255, 255, 255, 0.2);
-    border-radius: 6px;
 }
- 
+
+/* 🔷 Logout button */
 .logout {
     margin-left: auto;
 }
-/* ✅ Full-width Navbar */
-.navbar-container {
-    background: linear-gradient(to right, #2a5298, #4a90e2);
-    padding: 15px 30px;
-    width: 100%;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+
+/* 🔷 Responsive Design */
+@media (max-width: 768px) {
+    .navbar-content {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .navbar-menu {
+        flex-direction: column;
+        gap: 10px;
+        width: 100%;
+        margin-top: 10px;
+    }
+
+    .navbar-toggle {
+        display: block;
+    }
+
+    .navbar-links {
+        flex-direction: column;
+        align-items: flex-start;
+        width: 100%;
+    }
+
+    .logout {
+        margin-left: 0;
+        width: 100%;
+    }
 }
- 
-/* ✅ Navbar content */
-.navbar-content {
-    display: flex;
-    align-items: center;
-    width: 100%;
-}
- 
-/* ✅ Brand styling */
-.navbar-brand {
-    font-size: 22px;
-    font-weight: bold;
-    color: white;
-}
- 
-/* ✅ Navbar toggle button */
-.navbar-toggle {
-    background: none;
-    border: none;
-    cursor: pointer;
-}
- 
-.navbar-toggler-icon {
-    color: white;
-    font-size: 24px;
-}
- 
-/* ✅ Navbar menu */
-.navbar-menu {
-    display: flex;
-    justify-content: space-between;
-    width: 100%;
-}
- 
-/* ✅ Navigation links */
-.navbar-links {
-    display: flex;
-    gap: 20px;
-}
- 
-.nav-item {
-    list-style: none;
-}
- 
-.nav-link.custom-link {
-    font-size: 16px;
-    color: white;
-    padding: 8px 14px;
-    text-decoration: none;
-    transition: all 0.3s ease-in-out;
-}
- 
-.nav-link.custom-link:hover {
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 6px;
-}
- 
-/* ✅ Logout button positioning */
-.logout {
-    margin-left: auto;
-}
-.navbar-container {
-  width: 100vw; /* ✅ Makes sure it spans the full screen width */
-  max-width: 100%;
-  overflow: hidden; /* ✅ Prevents content from spilling out */
-  padding: 10px 20px; /* ✅ Adjusts padding for better spacing */
-}
-.navbar-links {
-  display: flex;
-  flex-wrap: wrap; /* ✅ Ensures items stay within the screen */
-  gap: 15px;
-  justify-content: center;
-}
-.navbar-content {
-  display: flex;
-  justify-content: space-between;
-  width: 100%;
-}
-import { NavLink } from 'react-router-dom';
-import { useSelector } from 'react-redux';
-import { getUser } from '../redux/selectors';
-import Logout from './Logout';
-import '../css/Navbar.css'; // ✅ Import the updated CSS file
- 
-const Navbar = () => {
-    const user = useSelector(getUser);
- 
-    return (
-        <nav className="navbar-container"> {/* ✅ Custom styling class */}
-            <div className="navbar-content">
-                <span className="navbar-brand">EMS</span>
-                <button className="navbar-toggle" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                    <span className="navbar-toggler-icon"></span>
-                </button>
-                <div className="navbar-menu collapse" id="navbarNav">
-                    <ul className="navbar-links">
-                        {user?.role === 'ADMIN' && (
-                            <>
-                                <li className="nav-item">
-                                    <NavLink className="nav-link custom-link" to="/dashboard">Dashboard</NavLink>
-                                </li>
-                                <li className="nav-item">
-                                    <NavLink className="nav-link custom-link" to="/add-employee">Add Employee</NavLink>
-                                </li>
-                                <li className="nav-item">
-                                    <NavLink className="nav-link custom-link" to="/approval">Approval</NavLink>
-                                </li>
-                            </>
-                        )}
-                        {user?.role === 'EMPLOYEE' && (
-                            <>
-                                <li className="nav-item">
-                                    <NavLink className="nav-link custom-link" to="/apply-leave">Apply Leave</NavLink>
-                                </li>
-                                <li className="nav-item">
-                                    <NavLink className="nav-link custom-link" to="/history">History</NavLink>
-                                </li>
-                            </>
-                        )}
-                        <li className="nav-item">
-                            <NavLink className="nav-link custom-link" to="/profile">Profile</NavLink>
-                        </li>
-                    </ul>
-                    <Logout />
-                </div>
-            </div>
-        </nav>
-    );
-};
- 
-export default Navbar;
