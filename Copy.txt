@@ -2,122 +2,146 @@ import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { resetPassword } from '../redux/actions/authActions';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { getResetPasswordError, getResetPasswordLoading, getResetPasswordMessage } from '../redux/selectors';
-import '../css/ResetPassword.css'; //Import updated CSS file
- 
+import {
+  getResetPasswordError,
+  getResetPasswordLoading,
+  getResetPasswordMessage,
+} from '../redux/selectors';
+import '../css/ResetPassword.css';
+
 const ResetPasswordForm = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
- 
+
   const [email] = useState(location.state?.email || '');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState({});
   const loading = useSelector(getResetPasswordLoading);
   const message = useSelector(getResetPasswordMessage);
   const error = useSelector(getResetPasswordError);
- 
+
   const validatePassword = (password) => {
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*]).{8,}$/;
     return passwordRegex.test(password);
   };
- 
+
   const handleNewPasswordChange = (e) => {
     const value = e.target.value;
     setNewPassword(value);
- 
+
     const errs = { ...errors };
- 
+
     if (!validatePassword(value)) {
-      errs.newPassword = 'Password must be at least 8 characters, include uppercase, lowercase, and a special character';
+      errs.newPassword =
+        'Password must be at least 8 characters, include uppercase, lowercase, and a special character';
     } else {
       delete errs.newPassword;
     }
- 
+
     if (confirmPassword && value !== confirmPassword) {
       errs.confirmPassword = 'Passwords do not match';
     } else {
       delete errs.confirmPassword;
     }
- 
+
     setErrors(errs);
   };
- 
+
   const handleConfirmPasswordChange = (e) => {
     const value = e.target.value;
     setConfirmPassword(value);
- 
+
     const errs = { ...errors };
- 
+
     if (newPassword !== value) {
       errs.confirmPassword = 'Passwords do not match';
     } else {
       delete errs.confirmPassword;
     }
- 
+
     setErrors(errs);
   };
- 
+
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!Object.keys(errors).length && newPassword && confirmPassword) {
       dispatch(resetPassword({ email, newPassword }));
     }
   };
- 
+
   useEffect(() => {
     if (message) {
       setTimeout(() => navigate('/login'), 1500);
     }
   }, [message, navigate]);
- 
+
   return (
     <div className="reset-password-container">
       <div className="reset-password-card">
         <h3 className="reset-password-title">Reset Password</h3>
         <form onSubmit={handleSubmit}>
-         
- 
+          {/* New Password */}
           <div className="mb-3">
             <label className="form-label">New Password</label>
             <div className="input-group">
               <input
-                type={showPassword ? 'text' : 'password'}
+                type={showNewPassword ? 'text' : 'password'}
                 className="form-control"
                 value={newPassword}
                 onChange={handleNewPasswordChange}
                 required
               />
-              <span className="input-group-text" onClick={() => setShowPassword(!showPassword)}>
-                {/* {showPassword ? '👀' : '🔒'} */}
+              <span
+                className="input-group-text"
+                onClick={() => setShowNewPassword(!showNewPassword)}
+              >
+                {showNewPassword ? '🙈' : '👁️'}
               </span>
             </div>
-            {errors.newPassword && <div className="text-danger">{errors.newPassword}</div>}
+            {errors.newPassword && (
+              <div className="text-danger">{errors.newPassword}</div>
+            )}
           </div>
- 
+
+          {/* Confirm Password */}
           <div className="mb-3">
             <label className="form-label">Confirm Password</label>
             <div className="input-group">
               <input
-                type={showPassword ? 'text' : 'password'}
+                type={showConfirmPassword ? 'text' : 'password'}
                 className="form-control"
                 value={confirmPassword}
                 onChange={handleConfirmPasswordChange}
                 required
               />
-              <span className="input-group-text" onClick={() => setShowPassword(!showPassword)}>
-                {/* {showPassword ? '👀' : '🔒'} */}
+              <span
+                className="input-group-text"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              >
+                {showConfirmPassword ? '🙈' : '👁️'}
               </span>
             </div>
-            {errors.confirmPassword && <div className="text-danger">{errors.confirmPassword}</div>}
+            {errors.confirmPassword && (
+              <div className="text-danger">{errors.confirmPassword}</div>
+            )}
           </div>
- 
-          <button className="btn1" disabled={loading || !newPassword || !confirmPassword || Object.keys(errors).length}>
+
+          <button
+            className="btn1"
+            disabled={
+              loading ||
+              !newPassword ||
+              !confirmPassword ||
+              Object.keys(errors).length
+            }
+          >
             {loading ? 'Resetting...' : 'Reset Password'}
           </button>
- 
+
           {message && <div className="alert alert-success mt-3">{message}</div>}
           {error && <div className="alert alert-danger mt-3">{error}</div>}
         </form>
@@ -125,11 +149,10 @@ const ResetPasswordForm = () => {
     </div>
   );
 };
- 
+
 export default ResetPasswordForm;
- 
- 
-/*  Full-screen container */
+
+/* Full-screen container */
 .reset-password-container {
   width: 100vw;
   height: 100vh;
@@ -137,30 +160,22 @@ export default ResetPasswordForm;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  background: linear-gradient(to right, #74ebd5, #ACB6E5);
+  background: linear-gradient(to right, #74ebd5, #acb6e5);
   background-image: url(https://images.unsplash.com/photo-1497215842964-222b430dc094?q=80&w=1470&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D);
-  overflow: hidden; /* Prevents overflow */
- 
+  overflow: hidden;
 }
- 
- 
- 
- 
- 
+
 /* Stylish form container */
 .reset-password-card {
   width: 420px;
-  /* background: rgba(255, 255, 255, 0.85);    
-  backdrop-filter: blur(8px); */
-     background: rgba(255, 255, 255, 0.85);  
-   /* background: rgba(255, 255, 255, 0.2);  */
+  background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(40px);
   padding: 25px;
   border-radius: 12px;
   box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.15);
   text-align: center;
 }
- 
+
 /* Form title */
 .reset-password-title {
   font-size: 22px;
@@ -168,77 +183,99 @@ export default ResetPasswordForm;
   color: #2a5298;
   margin-bottom: 20px;
 }
- 
-/* Labels with proper spacing */
+
+/* Labels */
 .form-label {
   display: block;
   margin-bottom: 10px;
   font-weight: bold;
   color: #333;
 }
- 
-/*Input fields */
+
+/* Input fields */
 .form-control {
   padding: 12px;
   font-size: 14px;
   border: 1px solid #2a5298;
   border-radius: 6px;
-  margin-bottom: 18px; /*Space between fields */
+  width: 100%;
 }
- 
+
 /* Password visibility toggle */
 .input-group-text {
   cursor: pointer;
   background: #2a5298;
   color: white;
+  padding: 10px 14px;
   border-radius: 6px;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
- 
-/*Submit button centered */
-.btn-primary {
-  display: block;
-  margin: 20px auto;
-  padding: 12px 20px;
-  font-size: 16px;
-  font-weight: bold;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.3s ease-in-out;
+
+/* Input group */
+.input-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Error messages */
+.text-danger {
+  color: red;
+  font-size: 13px;
+  margin-top: 6px;
+  margin-bottom: 14px;
+  text-align: left;
+}
+
+/* Submit button */
+.btn1 {
   background: #2a5298;
   color: white;
+  font-weight: bold;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+  transition: all 0.3s ease-in-out;
+  width: 100%;
 }
- 
-.btn-primary:hover {
+
+.btn1:hover {
   background: #1e3a75;
-  color: white; /*Ensures text remains readable */
   transform: scale(1.05);
 }
- 
+
 /* Alert messages */
 .alert {
   padding: 12px;
   border-radius: 8px;
- 
+  margin-top: 12px;
 }
- 
-/* Responsive Design */
+
+/* Responsive */
 @media (max-width: 480px) {
   .reset-password-card {
     width: 90%;
     padding: 20px;
   }
- 
+
   .reset-password-title {
     font-size: 18px;
   }
- 
-  .btn-primary {
+
+  .btn1 {
     font-size: 14px;
   }
 }
+
 *,
 *::before,
-*::after{
+*::after {
   box-sizing: border-box;
 }
- 
+
+
+
