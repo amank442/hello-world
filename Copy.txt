@@ -2,13 +2,11 @@ import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { resetPassword } from '../redux/actions/authActions';
 import { useLocation, useNavigate } from 'react-router-dom';
-import {
-  getResetPasswordError,
-  getResetPasswordLoading,
-  getResetPasswordMessage
-} from '../redux/selectors';
-
+import { getResetPasswordError, getResetPasswordLoading, getResetPasswordMessage } from '../redux/selectors';
 import '../css/ResetPassword.css';
+
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
 
 const ResetPasswordForm = () => {
   const location = useLocation();
@@ -20,13 +18,12 @@ const ResetPasswordForm = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({});
-
   const loading = useSelector(getResetPasswordLoading);
   const message = useSelector(getResetPasswordMessage);
   const error = useSelector(getResetPasswordError);
 
   const validatePassword = (password) => {
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*]).{8,}$/;
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&]).{8,}$/;
     return passwordRegex.test(password);
   };
 
@@ -36,10 +33,8 @@ const ResetPasswordForm = () => {
 
     const errs = { ...errors };
 
-    if (!value) {
-      errs.newPassword = 'Password is required';
-    } else if (!validatePassword(value)) {
-      errs.newPassword = 'Must be 8+ chars, include uppercase, lowercase, and special char';
+    if (!validatePassword(value)) {
+      errs.newPassword = 'Password must be at least 8 characters, include uppercase, lowercase, and a special character';
     } else {
       delete errs.newPassword;
     }
@@ -59,9 +54,7 @@ const ResetPasswordForm = () => {
 
     const errs = { ...errors };
 
-    if (!value) {
-      errs.confirmPassword = 'Confirm password is required';
-    } else if (newPassword !== value) {
+    if (newPassword !== value) {
       errs.confirmPassword = 'Passwords do not match';
     } else {
       delete errs.confirmPassword;
@@ -88,8 +81,7 @@ const ResetPasswordForm = () => {
       <div className="reset-password-card">
         <h3 className="reset-password-title">Reset Password</h3>
         <form onSubmit={handleSubmit}>
-          {/* New Password */}
-          <div className="form-group">
+          <div className="mb-3">
             <label className="form-label">New Password</label>
             <div className="input-group">
               <input
@@ -98,20 +90,16 @@ const ResetPasswordForm = () => {
                 value={newPassword}
                 onChange={handleNewPasswordChange}
                 required
+                autoComplete="new-password"
               />
-              <button
-                type="button"
-                className="eye-toggle"
-                onClick={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? '🙈' : '👁️'}
-              </button>
+              <span className="input-group-text" onClick={() => setShowPassword(!showPassword)}>
+                <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} />
+              </span>
             </div>
-            {errors.newPassword && <div className="error-text">{errors.newPassword}</div>}
+            {errors.newPassword && <div className="text-danger">{errors.newPassword}</div>}
           </div>
 
-          {/* Confirm Password */}
-          <div className="form-group">
+          <div className="mb-3">
             <label className="form-label">Confirm Password</label>
             <div className="input-group">
               <input
@@ -120,20 +108,17 @@ const ResetPasswordForm = () => {
                 value={confirmPassword}
                 onChange={handleConfirmPasswordChange}
                 required
+                autoComplete="new-password"
               />
-              <button
-                type="button"
-                className="eye-toggle"
-                onClick={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? '🙈' : '👁️'}
-              </button>
+              <span className="input-group-text" onClick={() => setShowPassword(!showPassword)}>
+                <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} />
+              </span>
             </div>
-            {errors.confirmPassword && <div className="error-text">{errors.confirmPassword}</div>}
+            {errors.confirmPassword && <div className="text-danger">{errors.confirmPassword}</div>}
           </div>
 
           <button
-            className="btn1"
+            className="btn-primary"
             disabled={loading || !newPassword || !confirmPassword || Object.keys(errors).length}
           >
             {loading ? 'Resetting...' : 'Reset Password'}
@@ -150,31 +135,31 @@ const ResetPasswordForm = () => {
 export default ResetPasswordForm;
 
 
-
-
-
+/* Full-screen container */
 .reset-password-container {
   width: 100vw;
   height: 100vh;
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
   background: linear-gradient(to right, #74ebd5, #ACB6E5);
-  background-image: url(https://images.unsplash.com/photo-1497215842964-222b430dc094?q=80&w=1470&auto=format&fit=crop);
-  background-size: cover;
-  overflow: hidden;
+  background-image: url(https://images.unsplash.com/photo-1497215842964-222b430dc094?q=80&w=1470&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D);
+  overflow: hidden; /* Prevent overflow */
 }
 
+/* Stylish form container */
 .reset-password-card {
   width: 420px;
   background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(20px);
+  backdrop-filter: blur(40px);
   padding: 25px;
   border-radius: 12px;
   box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.15);
   text-align: center;
 }
 
+/* Form title */
 .reset-password-title {
   font-size: 22px;
   font-weight: bold;
@@ -182,56 +167,55 @@ export default ResetPasswordForm;
   margin-bottom: 20px;
 }
 
+/* Labels with proper spacing */
 .form-label {
   display: block;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
   font-weight: bold;
   color: #333;
-  text-align: left;
 }
 
-.form-group {
-  margin-bottom: 20px;
-  text-align: left;
-}
-
-.input-group {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
+/* Input fields */
 .form-control {
-  flex: 1;
   padding: 12px;
   font-size: 14px;
   border: 1px solid #2a5298;
-  border-radius: 6px;
+  border-radius: 6px 0 0 6px; /* Rounded only left corners for input */
+  margin-bottom: 0; /* No bottom margin here, spacing done in container */
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
 }
 
-.eye-toggle {
+/* Group input and toggle button */
+.input-group {
+  display: flex;
+  align-items: center;
+  margin-bottom: 18px; /* Space between fields */
+}
+
+/* Password visibility toggle button */
+.input-group-text {
+  cursor: pointer;
   background: #2a5298;
   color: white;
-  border: none;
-  padding: 10px 14px;
-  font-size: 16px;
-  border-radius: 6px;
-  cursor: pointer;
+  border-radius: 0 6px 6px 0; /* Rounded only right corners for toggle */
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
 }
 
-.eye-toggle:hover {
-  background-color: #1e3a75;
+/* On hover effect for toggle */
+.input-group-text:hover {
+  background: #1e3a75;
 }
 
-.error-text {
-  color: red;
-  font-size: 13px;
-  margin-top: 4px;
-}
-
-.btn1 {
+/* Submit button centered and styled */
+.btn-primary {
   display: block;
-  margin: 0 auto;
+  margin: 20px auto 0 auto;
   padding: 12px 20px;
   font-size: 16px;
   font-weight: bold;
@@ -243,16 +227,31 @@ export default ResetPasswordForm;
   border: none;
 }
 
-.btn1:hover {
-  background: #1e3a75;
-  transform: scale(1.05);
+.btn-primary:disabled {
+  background: #888;
+  cursor: not-allowed;
 }
 
+.btn-primary:hover:enabled {
+  background: #1e3a75;
+  transform: scale(1.05);
+  color: white;
+}
+
+/* Alert messages */
 .alert {
   padding: 12px;
   border-radius: 8px;
 }
 
+/* Text error styling */
+.text-danger {
+  color: #dc3545;
+  font-size: 13px;
+  margin-top: 4px;
+}
+
+/* Responsive Design */
 @media (max-width: 480px) {
   .reset-password-card {
     width: 90%;
@@ -263,9 +262,37 @@ export default ResetPasswordForm;
     font-size: 18px;
   }
 
-  .btn1 {
+  .btn-primary {
     font-size: 14px;
   }
 }
+
+/* Hide browser default password reveal button */
+/* Chrome, Safari, Edge */
+input[type="password"]::-webkit-credentials-auto-fill-button,
+input[type="password"]::-webkit-clear-button {
+  display: none !important;
+  -webkit-appearance: none;
+}
+
+/* Edge */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+  display: none !important;
+}
+
+/* Prevent autofill styling glitches */
+input:-webkit-autofill {
+  box-shadow: 0 0 0px 1000px white inset;
+  -webkit-text-fill-color: #000;
+}
+
+/* Box sizing for all */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 
 
