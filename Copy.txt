@@ -1,85 +1,244 @@
-import React, { useEffect, useState } from 'react';
-import { connect } from 'react-redux';
-import { getToken } from '../redux/selectors';
-import { fetchUserProfile, updateUserProfile } from '../redux/actions/userActions';
-import { getUserProfile, getUserLoading, getUserError } from '../redux/selectors';
-import '../css/Profile.css';
+import { useState, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { resetPassword } from '../redux/actions/authActions';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { getResetPasswordError, getResetPasswordLoading, getResetPasswordMessage } from '../redux/selectors';
+import '../css/ResetPassword.css'; //Import updated CSS file
  
-const Profile = ({ profile, loading, error, fetchUserProfile, updateUserProfile, token }) => {
-  const [editMode, setEditMode] = useState(false);
-  const token = useSelector(getToken);
-  const [formData, setFormData] = useState({
-    firstname: '',
-    lastname: '',
-    email: '',
-    city: '',
-    state: '',
-    country: '',
-    department: '',
-    phnno: '',
-  });
+const ResetPasswordForm = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
  
-  useEffect(() => {
-    fetchUserProfile(token);
-  }, [fetchUserProfile, token]);
+  const [email] = useState(location.state?.email || '');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [errors, setErrors] = useState({});
+  const loading = useSelector(getResetPasswordLoading);
+  const message = useSelector(getResetPasswordMessage);
+  const error = useSelector(getResetPasswordError);
  
-  useEffect(() => {
-    if (profile) {
-      setFormData(profile);
+  const validatePassword = (password) => {
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*]).{8,}$/;
+    return passwordRegex.test(password);
+  };
+ 
+  const handleNewPasswordChange = (e) => {
+    const value = e.target.value;
+    setNewPassword(value);
+ 
+    const errs = { ...errors };
+ 
+    if (!validatePassword(value)) {
+      errs.newPassword = 'Password must be at least 8 characters, include uppercase, lowercase, and a special character';
+    } else {
+      delete errs.newPassword;
     }
-  }, [profile]);
  
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    if (confirmPassword && value !== confirmPassword) {
+      errs.confirmPassword = 'Passwords do not match';
+    } else {
+      delete errs.confirmPassword;
+    }
+ 
+    setErrors(errs);
+  };
+ 
+  const handleConfirmPasswordChange = (e) => {
+    const value = e.target.value;
+    setConfirmPassword(value);
+ 
+    const errs = { ...errors };
+ 
+    if (newPassword !== value) {
+      errs.confirmPassword = 'Passwords do not match';
+    } else {
+      delete errs.confirmPassword;
+    }
+ 
+    setErrors(errs);
   };
  
   const handleSubmit = (e) => {
     e.preventDefault();
-    updateUserProfile(formData, token);
-    setEditMode(false);
+    if (!Object.keys(errors).length && newPassword && confirmPassword) {
+      dispatch(resetPassword({ email, newPassword }));
+    }
   };
  
-  if (loading) return <p className="loading">Loading profile...</p>;
-  if (error) return <p className="error">{error}</p>;
+  useEffect(() => {
+    if (message) {
+      setTimeout(() => navigate('/login'), 1500);
+    }
+  }, [message, navigate]);
  
   return (
-    <div className="profile-container">
-      <h2 className="profile-heading">User Profile</h2>
+    <div className="reset-password-container">
+      <div className="reset-password-card">
+        <h3 className="reset-password-title">Reset Password</h3>
+        <form onSubmit={handleSubmit}>
+         
  
-      {!editMode ? (
-        <div className="profile-details">
-          <p><strong>First Name:</strong> {profile?.firstname}</p>
-          <p><strong>Last Name:</strong> {profile?.lastname}</p>
-          <p><strong>Email:</strong> {profile?.email}</p>
-          <p><strong>City:</strong> {profile?.city}</p>
-          <p><strong>State:</strong> {profile?.state}</p>
-          <p><strong>Country:</strong> {profile?.country}</p>
-          <p><strong>Department:</strong> {profile?.department}</p>
-          <p><strong>Phone Number:</strong> {profile?.phnno}</p>
-          <button className="btn-edit" onClick={() => setEditMode(true)}>Edit Profile</button>
-        </div>
-      ) : (
-        <form className="profile-form" onSubmit={handleSubmit}>
-          <input type="text" name="firstname" value={formData.firstname} onChange={handleChange} placeholder="First Name" />
-          <input type="text" name="lastname" value={formData.lastname} onChange={handleChange} placeholder="Last Name" />
-          <input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="Email" />
-          <input type="text" name="city" value={formData.city} onChange={handleChange} placeholder="City" />
-          <input type="text" name="state" value={formData.state} onChange={handleChange} placeholder="State" />
-          <input type="text" name="country" value={formData.country} onChange={handleChange} placeholder="Country" />
-          <input type="text" name="department" value={formData.department} onChange={handleChange} placeholder="Department" />
-          <input type="text" name="phnno" value={formData.phnno} onChange={handleChange} placeholder="Phone Number" />
-          <button type="submit" className="btn-save">Save</button>
-          <button type="button" className="btn-cancel" onClick={() => setEditMode(false)}>Cancel</button>
+          <div className="mb-3">
+            <label className="form-label">New Password</label>
+            <div className="input-group">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                className="form-control"
+                value={newPassword}
+                onChange={handleNewPasswordChange}
+                required
+              />
+              <span className="input-group-text" onClick={() => setShowPassword(!showPassword)}>
+                {/* {showPassword ? '👀' : '🔒'} */}
+              </span>
+            </div>
+            {errors.newPassword && <div className="text-danger">{errors.newPassword}</div>}
+          </div>
+ 
+          <div className="mb-3">
+            <label className="form-label">Confirm Password</label>
+            <div className="input-group">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                className="form-control"
+                value={confirmPassword}
+                onChange={handleConfirmPasswordChange}
+                required
+              />
+              <span className="input-group-text" onClick={() => setShowPassword(!showPassword)}>
+                {/* {showPassword ? '👀' : '🔒'} */}
+              </span>
+            </div>
+            {errors.confirmPassword && <div className="text-danger">{errors.confirmPassword}</div>}
+          </div>
+ 
+          <button className="btn1" disabled={loading || !newPassword || !confirmPassword || Object.keys(errors).length}>
+            {loading ? 'Resetting...' : 'Reset Password'}
+          </button>
+ 
+          {message && <div className="alert alert-success mt-3">{message}</div>}
+          {error && <div className="alert alert-danger mt-3">{error}</div>}
         </form>
-      )}
+      </div>
     </div>
   );
 };
  
-const mapStateToProps = (state) => ({
-  profile: getUserProfile(state),
-  loading: getUserLoading(state),
-  error: getUserError(state),
-});
+export default ResetPasswordForm;
  
-export default connect(mapStateToProps, { fetchUserProfile, updateUserProfile })(Profile);
+ 
+/*  Full-screen container */
+.reset-password-container {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(to right, #74ebd5, #ACB6E5);
+  background-image: url(https://images.unsplash.com/photo-1497215842964-222b430dc094?q=80&w=1470&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D);
+  overflow: hidden; /* Prevents overflow */
+ 
+}
+ 
+ 
+ 
+ 
+ 
+/* Stylish form container */
+.reset-password-card {
+  width: 420px;
+  /* background: rgba(255, 255, 255, 0.85);    
+  backdrop-filter: blur(8px); */
+     background: rgba(255, 255, 255, 0.85);  
+   /* background: rgba(255, 255, 255, 0.2);  */
+  backdrop-filter: blur(40px);
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.15);
+  text-align: center;
+}
+ 
+/* Form title */
+.reset-password-title {
+  font-size: 22px;
+  font-weight: bold;
+  color: #2a5298;
+  margin-bottom: 20px;
+}
+ 
+/* Labels with proper spacing */
+.form-label {
+  display: block;
+  margin-bottom: 10px;
+  font-weight: bold;
+  color: #333;
+}
+ 
+/*Input fields */
+.form-control {
+  padding: 12px;
+  font-size: 14px;
+  border: 1px solid #2a5298;
+  border-radius: 6px;
+  margin-bottom: 18px; /*Space between fields */
+}
+ 
+/* Password visibility toggle */
+.input-group-text {
+  cursor: pointer;
+  background: #2a5298;
+  color: white;
+  border-radius: 6px;
+}
+ 
+/*Submit button centered */
+.btn-primary {
+  display: block;
+  margin: 20px auto;
+  padding: 12px 20px;
+  font-size: 16px;
+  font-weight: bold;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease-in-out;
+  background: #2a5298;
+  color: white;
+}
+ 
+.btn-primary:hover {
+  background: #1e3a75;
+  color: white; /*Ensures text remains readable */
+  transform: scale(1.05);
+}
+ 
+/* Alert messages */
+.alert {
+  padding: 12px;
+  border-radius: 8px;
+ 
+}
+ 
+/* Responsive Design */
+@media (max-width: 480px) {
+  .reset-password-card {
+    width: 90%;
+    padding: 20px;
+  }
+ 
+  .reset-password-title {
+    font-size: 18px;
+  }
+ 
+  .btn-primary {
+    font-size: 14px;
+  }
+}
+*,
+*::before,
+*::after{
+  box-sizing: border-box;
+}
+ 
