@@ -1,298 +1,33 @@
-import { useState, useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { resetPassword } from '../redux/actions/authActions';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { getResetPasswordError, getResetPasswordLoading, getResetPasswordMessage } from '../redux/selectors';
-import '../css/ResetPassword.css';
+Subject: Summary of Learnings from Today’s KT Session
 
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
+Dear [Manager's Name],
 
-const ResetPasswordForm = () => {
-  const location = useLocation();
-  const navigate = useNavigate();
-  const dispatch = useDispatch();
+I hope you're doing well.
 
-  const [email] = useState(location.state?.email || '');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [errors, setErrors] = useState({});
-  const loading = useSelector(getResetPasswordLoading);
-  const message = useSelector(getResetPasswordMessage);
-  const error = useSelector(getResetPasswordError);
+I would like to share the key takeaways from today’s KT session:
 
-  const validatePassword = (password) => {
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&]).{8,}$/;
-    return passwordRegex.test(password);
-  };
+Learned about the project name and its overall purpose
 
-  const handleNewPasswordChange = (e) => {
-    const value = e.target.value;
-    setNewPassword(value);
+Understood the types of portals involved
 
-    const errs = { ...errors };
+Gained clarity on the different environments used (dev, QA, UAT, prod, etc.)
 
-    if (!validatePassword(value)) {
-      errs.newPassword = 'Password must be at least 8 characters, include uppercase, lowercase, and a special character';
-    } else {
-      delete errs.newPassword;
-    }
+Familiarized with the tech stack used in the project
 
-    if (confirmPassword && value !== confirmPassword) {
-      errs.confirmPassword = 'Passwords do not match';
-    } else {
-      delete errs.confirmPassword;
-    }
+Walked through the flow of services across the system
 
-    setErrors(errs);
-  };
+Got insights into the microservices architecture and their roles
 
-  const handleConfirmPasswordChange = (e) => {
-    const value = e.target.value;
-    setConfirmPassword(value);
+Understood the approach for deploying to higher environments
 
-    const errs = { ...errors };
+Learned about the types of clusters configured in different environments
 
-    if (newPassword !== value) {
-      errs.confirmPassword = 'Passwords do not match';
-    } else {
-      delete errs.confirmPassword;
-    }
+Identified the base branch used for development
 
-    setErrors(errs);
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!Object.keys(errors).length && newPassword && confirmPassword) {
-      dispatch(resetPassword({ email, newPassword }));
-    }
-  };
-
-  useEffect(() => {
-    if (message) {
-      setTimeout(() => navigate('/login'), 1500);
-    }
-  }, [message, navigate]);
-
-  return (
-    <div className="reset-password-container">
-      <div className="reset-password-card">
-        <h3 className="reset-password-title">Reset Password</h3>
-        <form onSubmit={handleSubmit}>
-          <div className="mb-3">
-            <label className="form-label">New Password</label>
-            <div className="input-group">
-              <input
-                type={showPassword ? 'text' : 'password'}
-                className="form-control"
-                value={newPassword}
-                onChange={handleNewPasswordChange}
-                required
-                autoComplete="new-password"
-              />
-              <span className="input-group-text" onClick={() => setShowPassword(!showPassword)}>
-                <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} />
-              </span>
-            </div>
-            {errors.newPassword && <div className="text-danger">{errors.newPassword}</div>}
-          </div>
-
-          <div className="mb-3">
-            <label className="form-label">Confirm Password</label>
-            <div className="input-group">
-              <input
-                type={showPassword ? 'text' : 'password'}
-                className="form-control"
-                value={confirmPassword}
-                onChange={handleConfirmPasswordChange}
-                required
-                autoComplete="new-password"
-              />
-              <span className="input-group-text" onClick={() => setShowPassword(!showPassword)}>
-                <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} />
-              </span>
-            </div>
-            {errors.confirmPassword && <div className="text-danger">{errors.confirmPassword}</div>}
-          </div>
-
-          <button
-            className="btn-primary"
-            disabled={loading || !newPassword || !confirmPassword || Object.keys(errors).length}
-          >
-            {loading ? 'Resetting...' : 'Reset Password'}
-          </button>
-
-          {message && <div className="alert alert-success mt-3">{message}</div>}
-          {error && <div className="alert alert-danger mt-3">{error}</div>}
-        </form>
-      </div>
-    </div>
-  );
-};
-
-export default ResetPasswordForm;
+Observed the Jenkins setup used for building and deploying each service
 
 
-/* Full-screen container */
-.reset-password-container {
-  width: 100vw;
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  background: linear-gradient(to right, #74ebd5, #ACB6E5);
-  background-image: url(https://images.unsplash.com/photo-1497215842964-222b430dc094?q=80&w=1470&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D);
-  overflow: hidden; /* Prevent overflow */
-}
+Please let me know if you'd like a more detailed summary or if I can assist with any tasks related to these areas.
 
-/* Stylish form container */
-.reset-password-card {
-  width: 420px;
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(40px);
-  padding: 25px;
-  border-radius: 12px;
-  box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.15);
-  text-align: center;
-}
-
-/* Form title */
-.reset-password-title {
-  font-size: 22px;
-  font-weight: bold;
-  color: #2a5298;
-  margin-bottom: 20px;
-}
-
-/* Labels with proper spacing */
-.form-label {
-  display: block;
-  margin-bottom: 10px;
-  font-weight: bold;
-  color: #333;
-}
-
-/* Input fields */
-.form-control {
-  padding: 12px;
-  font-size: 14px;
-  border: 1px solid #2a5298;
-  border-radius: 6px 0 0 6px; /* Rounded only left corners for input */
-  margin-bottom: 0; /* No bottom margin here, spacing done in container */
-  outline: none;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-/* Group input and toggle button */
-.input-group {
-  display: flex;
-  align-items: center;
-  margin-bottom: 18px; /* Space between fields */
-}
-
-/* Password visibility toggle button */
-.input-group-text {
-  cursor: pointer;
-  background: #2a5298;
-  color: white;
-  border-radius: 0 6px 6px 0; /* Rounded only right corners for toggle */
-  padding: 12px 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  user-select: none;
-}
-
-/* On hover effect for toggle */
-.input-group-text:hover {
-  background: #1e3a75;
-}
-
-/* Submit button centered and styled */
-.btn-primary {
-  display: block;
-  margin: 20px auto 0 auto;
-  padding: 12px 20px;
-  font-size: 16px;
-  font-weight: bold;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.3s ease-in-out;
-  background: #2a5298;
-  color: white;
-  border: none;
-}
-
-.btn-primary:disabled {
-  background: #888;
-  cursor: not-allowed;
-}
-
-.btn-primary:hover:enabled {
-  background: #1e3a75;
-  transform: scale(1.05);
-  color: white;
-}
-
-/* Alert messages */
-.alert {
-  padding: 12px;
-  border-radius: 8px;
-}
-
-/* Text error styling */
-.text-danger {
-  color: #dc3545;
-  font-size: 13px;
-  margin-top: 4px;
-}
-
-/* Responsive Design */
-@media (max-width: 480px) {
-  .reset-password-card {
-    width: 90%;
-    padding: 20px;
-  }
-
-  .reset-password-title {
-    font-size: 18px;
-  }
-
-  .btn-primary {
-    font-size: 14px;
-  }
-}
-
-/* Hide browser default password reveal button */
-/* Chrome, Safari, Edge */
-input[type="password"]::-webkit-credentials-auto-fill-button,
-input[type="password"]::-webkit-clear-button {
-  display: none !important;
-  -webkit-appearance: none;
-}
-
-/* Edge */
-input[type="password"]::-ms-reveal,
-input[type="password"]::-ms-clear {
-  display: none !important;
-}
-
-/* Prevent autofill styling glitches */
-input:-webkit-autofill {
-  box-shadow: 0 0 0px 1000px white inset;
-  -webkit-text-fill-color: #000;
-}
-
-/* Box sizing for all */
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
-
-
-
+Best regards,
+[Your Name]
