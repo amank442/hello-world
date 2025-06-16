@@ -1,39 +1,21 @@
-No problem! Here’s a revised version of your email summarizing both Day 1 and Day 2 learnings clearly and professionally:
-
-
----
-
-Subject: KT Session Summary – Day 1 & Day 2
+Subject: KT Session Summary – Day 3
 
 Dear [Manager's Name],
 
-Apologies for the delay. Please find below the summary of my learnings from the past two days' KT sessions:
+Apologies for the delay in sharing today's update.
 
-Day 1:
+Please find below the summary of my learnings from today’s KT session:
 
-Observed the SIT deployment process and its key steps
+Seen the setup of Application Gateway in the project
 
-Learned about the base branch used for development and release
+Explored API Management in Azure
 
-Understood the JSON flow and data structure across services
+Understood the use of SQL Server as the database
 
+Got an overview of Azure Application Insights for monitoring
 
-Day 2:
+Learned in-depth about the release cut process and its detailed flow
 
-Gained insights into API Management in Azure
-
-Learned about Redis Cache usage and configuration
-
-Understood the SIT release cut process and how it's managed
-
-
-Please let me know if you'd like further details on any of the above points.
 
 Best regards,
 [Your Name]
-
-
----
-
-Let me know if you'd like to add your project name or customize the tone!
-
