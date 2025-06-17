@@ -1,31 +1,26 @@
-Subject: Topics I’m Excited to Learn in the Upcoming Linux Session
-
-Hi Team,
-
-As we get ready for the upcoming Linux session, I wanted to share the topics I’m particularly looking forward to diving deeper into. I believe these will greatly enhance my day-to-day DevOps work:
-
-Linux file system structure and essential commands
-
-User and group management with permissions
-
-Process management and monitoring (ps, top, htop, kill, etc.)
-
-Package management (apt, yum, dnf)
-
-Bash scripting for automation
-
-Disk usage analysis, partitioning, and mounting
-
-Log management using journalctl, /var/log, and rotation
-
-Networking tools and troubleshooting (netstat, ss, ip, ping, traceroute)
-
-Useful text processing tools: grep, awk, sed
-
-Linux security basics (file permissions, firewall, SELinux/AppArmor)
+Here's your updated email with Day 4 summary, written clearly and professionally:
 
 
-I’m eager to strengthen my Linux foundation and improve troubleshooting skills for real-world scenarios. Looking forward to learning together!
+---
+
+Subject: KT Session Summary – Day 4
+
+Dear [Manager's Name],
+
+Please find below the summary of my learnings from today’s KT session:
+
+Attended a doubt-clearing session on API Management and Application Insights
+
+Learned about the branch policies applied to both base and release branches
+
+Went through the project documentation shared by Rahul to understand the architecture and flow
+
 
 Best regards,
-Aman
+[Your Name]
+
+
+---
+
+Let me know if you want to add specific questions or insights from the doubt session!
+
