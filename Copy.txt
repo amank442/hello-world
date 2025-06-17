@@ -1,21 +1,31 @@
-Subject: KT Session Summary – Day 3
+Subject: Topics I’m Excited to Learn in the Upcoming Linux Session
 
-Dear [Manager's Name],
+Hi Team,
 
-Apologies for the delay in sharing today's update.
+As we get ready for the upcoming Linux session, I wanted to share the topics I’m particularly looking forward to diving deeper into. I believe these will greatly enhance my day-to-day DevOps work:
 
-Please find below the summary of my learnings from today’s KT session:
+Linux file system structure and essential commands
 
-Seen the setup of Application Gateway in the project
+User and group management with permissions
 
-Explored API Management in Azure
+Process management and monitoring (ps, top, htop, kill, etc.)
 
-Understood the use of SQL Server as the database
+Package management (apt, yum, dnf)
 
-Got an overview of Azure Application Insights for monitoring
+Bash scripting for automation
 
-Learned in-depth about the release cut process and its detailed flow
+Disk usage analysis, partitioning, and mounting
 
+Log management using journalctl, /var/log, and rotation
+
+Networking tools and troubleshooting (netstat, ss, ip, ping, traceroute)
+
+Useful text processing tools: grep, awk, sed
+
+Linux security basics (file permissions, firewall, SELinux/AppArmor)
+
+
+I’m eager to strengthen my Linux foundation and improve troubleshooting skills for real-world scenarios. Looking forward to learning together!
 
 Best regards,
-[Your Name]
+Aman
