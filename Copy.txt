@@ -1,19 +1,19 @@
-Here's your updated email with Day 4 summary, written clearly and professionally:
+Here’s your email for the next day’s KT summary, keeping it concise and clear:
 
 
 ---
 
-Subject: KT Session Summary – Day 4
+Subject: KT Session Summary – Day 5
 
 Dear [Manager's Name],
 
-Please find below the summary of my learnings from today’s KT session:
+Please find below the summary of my learnings and activities from today:
 
-Attended a doubt-clearing session on API Management and Application Insights
+Deployed JSON from the release branch in the SIT environment
 
-Learned about the branch policies applied to both base and release branches
+Joined a call with Rahul regarding the migration of EFK to UAT in RMS
 
-Went through the project documentation shared by Rahul to understand the architecture and flow
+Spent time on self-study, focusing on Linux fundamentals and Application Gateway
 
 
 Best regards,
@@ -22,5 +22,5 @@ Best regards,
 
 ---
 
-Let me know if you want to add specific questions or insights from the doubt session!
+Let me know if you’d like to make it more formal or include specific topics studied.
 
