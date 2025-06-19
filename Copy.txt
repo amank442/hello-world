@@ -1,19 +1,21 @@
-Here’s your email for the next day’s KT summary, keeping it concise and clear:
+Here’s your email for today’s KT summary (Day 6), keeping the tone professional and the content crisp:
 
 
 ---
 
-Subject: KT Session Summary – Day 5
+Subject: KT Session Summary – Day 6
 
 Dear [Manager's Name],
 
-Please find below the summary of my learnings and activities from today:
+Please find below the summary of today’s activities:
 
-Deployed JSON from the release branch in the SIT environment
+No deployment request was raised today
 
-Joined a call with Rahul regarding the migration of EFK to UAT in RMS
+Focused on studying some core Linux concepts
 
-Spent time on self-study, focusing on Linux fundamentals and Application Gateway
+Revised previous topics covered in Azure
+
+Recapped key concepts from earlier KT sessions for better clarity
 
 
 Best regards,
@@ -22,5 +24,5 @@ Best regards,
 
 ---
 
-Let me know if you’d like to make it more formal or include specific topics studied.
+Let me know if you'd like to break down the Linux or Azure topics as well.
 
