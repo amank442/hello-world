@@ -1,28 +1,534 @@
-Here’s your email for today’s KT summary (Day 6), keeping the tone professional and the content crisp:
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 
+"""
+AI Deploy Agent (No-LLM, Rule-Based)
 
----
+Features:
+- Parse deployment requests from email-like text (regex, tolerant)
+- Plan actions with safety checks (EXECUTE / ASK_APPROVAL / ASK_CLARIFICATION)
+- React -> wait for result -> Node (only if React SUCCESS) -> JSON
+- Jenkins client:
+  * CSRF crumb support
+  * Queue -> build number -> final result polling
+  * Smart trigger: auto-detect parameterized jobs; uses /build if not parameterized
+  * Multibranch-aware (optional): if MBP, can trigger child branch job when provided
+- .env support with python-dotenv (fallback loader included)
+- Interactive terminal approval or force-bypass via AGENT_FORCE_EXECUTE=1
+- Clear logging and summaries
 
-Subject: KT Session Summary – Day 6
+Author: Aman + M365 Copilot
+"""
 
-Dear [Manager's Name],
+import os
+import re
+import time
+import json
+import logging
+import xml.etree.ElementTree as ET
+from typing import Optional, Dict, Tuple, List
+import requests
+from requests.auth import HTTPBasicAuth
 
-Please find below the summary of today’s activities:
+# =========================
+# .ENV LOADING
+# =========================
+def load_env():
+    """
+    Loads environment variables from .env using python-dotenv if available,
+    otherwise a minimal fallback parser.
+    """
+    try:
+        from dotenv import load_dotenv, find_dotenv
+        load_dotenv(find_dotenv())
+        return
+    except Exception:
+        # Fallback: simple .env in current dir
+        env_path = os.path.join(os.getcwd(), ".env")
+        if not os.path.isfile(env_path):
+            return
+        with open(env_path, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith("#") or "=" not in line:
+                    continue
+                k, v = line.split("=", 1)
+                os.environ.setdefault(k.strip(), v.strip())
 
-No deployment request was raised today
+load_env()
 
-Focused on studying some core Linux concepts
+# =========================
+# CONFIG
+# =========================
+def cs_list(name: str) -> List[str]:
+    val = os.getenv(name, "")
+    return [x.strip() for x in val.split(",") if x.strip()]
 
-Revised previous topics covered in Azure
+def cs_set(name: str) -> set:
+    return set([x.lower() for x in cs_list(name)])
 
-Recapped key concepts from earlier KT sessions for better clarity
+JENKINS_BASE_URL = os.getenv("JENKINS_BASE_URL", "http://<jenkins-host>:8080/jenkins")
+JENKINS_USER     = os.getenv("JENKINS_USER", "")
+JENKINS_TOKEN    = os.getenv("JENKINS_TOKEN", "")
 
+AGENT_FORCE_EXECUTE = os.getenv("AGENT_FORCE_EXECUTE", "0") == "1"
+RISKY_ENVS          = set([x.lower() for x in os.getenv("RISKY_ENVS", "prod,security").split(",") if x.strip()])
+APPROVED_SENDERS    = cs_set("APPROVED_SENDERS")
 
-Best regards,
-[Your Name]
+PASS_BRANCH_PARAM   = os.getenv("PASS_BRANCH_PARAM", "0") == "1"   # your jobs are NOT parameterized → default False
+DRY_RUN             = os.getenv("DRY_RUN", "0") == "1"
 
+# Map environments to job names (edit as needed; supports folder paths like "Folder/Sub/Job")
+JOB_NAME_MAP: Dict[str, Dict[str, str]] = {
+    "security": {
+        "react": "BFA_ReactJS_SECURITY",
+        "node":  "BLUE_NodeJS_SECURITY",
+        "json":  "BFA_JSON_SECURITY"
+    },
+    # "dev": {...}, "qa": {...}, "prod": {...}
+}
 
----
+# =========================
+# LOGGING
+# =========================
+def setup_logger(verbose: bool = True) -> logging.Logger:
+    log = logging.getLogger("agent")
+    if not log.handlers:
+        log.setLevel(logging.DEBUG)
+        fmt = logging.Formatter("%(asctime)s | %(levelname)-8s | %(message)s", "%Y-%m-%d %H:%M:%S")
+        ch = logging.StreamHandler()
+        ch.setFormatter(fmt)
+        ch.setLevel(logging.DEBUG if verbose else logging.INFO)
+        log.addHandler(ch)
+    return log
 
-Let me know if you'd like to break down the Linux or Azure topics as well.
+log = setup_logger(True)
 
+# =========================
+# EMAIL PARSER (regex heuristics)
+# =========================
+def parse_email(subject: str, body: str, sender: Optional[str] = None) -> Dict:
+    """
+    Returns:
+      {
+        "intent": "deploy"|"unknown",
+        "environment": "security"|...|None,
+        "items": [{"service":"react","branch":"..."}],
+        "sender": "user@domain" or None
+      }
+    """
+    text = f"{subject}\n{body}"
+
+    # Environment: "in <env> environment" OR "env: <env>"
+    env = None
+    m = re.search(r'\bin\s+([A-Za-z0-9_\-]+)\s+environment\b', text, re.IGNORECASE)
+    if m:
+        env = m.group(1).strip().lower()
+    else:
+        m2 = re.search(r'\benv(?:ironment)?\s*[:=\-]\s*([A-Za-z0-9_\-]+)', text, re.IGNORECASE)
+        env = m2.group(1).strip().lower() if m2 else None
+
+    # Service:Branch pairs (React/Node/JSON)
+    pairs = re.findall(r'(?i)\b(react|node|json)\s*[:=\-]\s*([A-Za-z0-9_\-\/\.]+)', text)
+    items = [{"service": s.lower(), "branch": b.strip()} for s, b in pairs]
+
+    intent = "deploy" if items else "unknown"
+    return {
+        "intent": intent,
+        "environment": env,
+        "items": items,
+        "sender": (sender or "").lower() or None,
+    }
+
+# =========================
+# PLANNER (rule-based “brain”)
+# =========================
+def plan_actions(parsed: Dict) -> Dict:
+    """
+    Returns:
+      {
+        "action": "EXECUTE"|"ASK_CLARIFICATION"|"ASK_APPROVAL",
+        "reason": "...",
+        "sequence": ["react","node","json"],
+        "required_info": {...},
+        "risky": bool
+      }
+    """
+    if parsed["intent"] != "deploy":
+        return {
+            "action": "ASK_CLARIFICATION",
+            "reason": "No deploy intent detected.",
+            "sequence": [],
+            "required_info": {"intent": "Please confirm if this is a deployment request."},
+            "risky": False
+        }
+
+    missing = {}
+    env = parsed.get("environment")
+    items = parsed.get("items", [])
+
+    if not env:
+        missing["environment"] = "Which environment? (e.g., dev/qa/security/prod)"
+    if not items:
+        missing["items"] = "Provide service:branch pairs (e.g., React: feature/x)."
+    if env and env not in JOB_NAME_MAP:
+        missing["environment"] = f"Unknown environment '{env}'. Available: {list(JOB_NAME_MAP.keys())}"
+
+    for it in items:
+        svc = it["service"]
+        if svc not in ("react", "node", "json"):
+            missing[f"service_{svc}"] = "Unknown service (expected: react/node/json)."
+        if not it["branch"]:
+            missing[f"branch_for_{svc}"] = "Missing branch."
+
+    if missing:
+        return {
+            "action": "ASK_CLARIFICATION",
+            "reason": "Missing or invalid fields.",
+            "sequence": [],
+            "required_info": missing,
+            "risky": False
+        }
+
+    risky = env in RISKY_ENVS
+    needs_approval = False
+    sender = parsed.get("sender")
+    if risky:
+        needs_approval = True
+    if sender and APPROVED_SENDERS and sender not in APPROVED_SENDERS and env in RISKY_ENVS:
+        needs_approval = True
+
+    # Build sequence: React -> Node -> others (e.g., JSON)
+    requested = [i["service"] for i in items]
+    sequence: List[str] = []
+    if "react" in requested:
+        sequence.append("react")
+    if "node" in requested:
+        sequence.append("node")
+    for s in requested:
+        if s not in ("react", "node"):
+            sequence.append(s)
+
+    if needs_approval and not AGENT_FORCE_EXECUTE:
+        return {
+            "action": "ASK_APPROVAL",
+            "reason": f"Approval required for '{env}' environment.",
+            "sequence": sequence,
+            "required_info": {"approval": f"Explicit approval needed to deploy to {env}."},
+            "risky": True
+        }
+
+    return {
+        "action": "EXECUTE",
+        "reason": "All required info present; safe to proceed.",
+        "sequence": sequence,
+        "required_info": {},
+        "risky": risky
+    }
+
+# Optional: terminal approval fallback
+def request_terminal_approval(env: str, items: list) -> bool:
+    print("\n=== APPROVAL REQUIRED ===")
+    print(f"Environment: {env}")
+    for it in items:
+        print(f" - {it['service']}: {it['branch']}")
+    resp = input("Approve deployment? [y/N]: ").strip().lower()
+    return resp in ("y", "yes")
+
+# =========================
+# JENKINS CLIENT
+# =========================
+def ensure_trailing_slash(url: str) -> str:
+    return url if url.endswith("/") else url + "/"
+
+def job_path(job_name: str) -> str:
+    # support nested: "Folder/Sub/Job" -> "job/Folder/job/Sub/job/Job"
+    parts = [p for p in job_name.split("/") if p]
+    return "/".join(["job/" + requests.utils.quote(p, safe="") for p in parts])
+
+class JenkinsClient:
+    def __init__(self, base_url: str, user: str, token: str, logger: logging.Logger):
+        self.base = ensure_trailing_slash(base_url)
+        self.auth = HTTPBasicAuth(user, token)
+        self.sess = requests.Session()
+        self.sess.auth = self.auth
+        self.log = logger
+        self.crumb: Optional[Tuple[str, str]] = None
+        self._init_crumb()
+
+    def _init_crumb(self):
+        url = self.base + "crumbIssuer/api/json"
+        try:
+            r = self.sess.get(url, timeout=15)
+            if r.status_code == 404:
+                self.log.info("Crumb issuer not found (may be disabled). Proceeding without crumb.")
+                return
+            r.raise_for_status()
+            data = r.json()
+            self.crumb = (data.get("crumbRequestField"), data.get("crumb"))
+            self.log.debug(f"Got crumb field={self.crumb[0]}")
+        except Exception as e:
+            self.log.info(f"No crumb used (error fetching crumb: {e})")
+
+    def _headers(self) -> Dict[str, str]:
+        h = {"User-Agent": "AgentLite/1.1"}
+        if self.crumb and all(self.crumb):
+            h[self.crumb[0]] = self.crumb[1]
+        return h
+
+    def get_config_xml(self, job_name: str) -> Optional[str]:
+        url = self.base + job_path(job_name) + "/config.xml"
+        r = self.sess.get(url, headers=self._headers(), timeout=30)
+        if r.status_code == 200:
+            return r.text
+        self.log.error(f"Fetch config failed {job_name}: {r.status_code}")
+        return None
+
+    def validate_branch(self, job_name: str, branch: str) -> bool:
+        xml = self.get_config_xml(job_name)
+        if not xml:
+            return False
+        try:
+            root = ET.fromstring(xml)
+            names = [n.text.strip() for n in root.findall(".//scm/branches/*/name") if n.text]
+            self.log.debug(f"{job_name} BranchSpecs: {names}")
+            if not names:
+                self.log.warning(f"No <branches> in config.xml for {job_name}; skipping strict validation.")
+                return True
+            def match(spec: str, br: str) -> bool:
+                if spec == br:
+                    return True
+                if "*" in spec and spec.startswith("*/"):
+                    return br.split("/")[-1] == spec[2:]
+                return False
+            ok = any(match(spec, branch) for spec in names)
+            if not ok:
+                self.log.error(f"Requested branch '{branch}' not in BranchSpecs {names}")
+            return ok
+        except Exception as e:
+            self.log.error(f"XML parse failed for {job_name} config: {e}")
+            return True  # be permissive if parsing fails
+
+    def get_job_info(self, job_name: str) -> Optional[dict]:
+        fields = "_class,disabled,actions[_class,parameterDefinitions[name,defaultParameterValue[value],type]],jobs[name,url]"
+        url = self.base + job_path(job_name) + f"/api/json?tree={fields}"
+        r = self.sess.get(url, timeout=30, headers=self._headers())
+        if r.status_code >= 400:
+            self.log.error(f"Job info fetch failed {job_name}: {r.status_code}")
+            return None
+        return r.json()
+
+    def is_parameterized(self, info: dict) -> bool:
+        if not info:
+            return False
+        for act in info.get("actions", []):
+            if act and (act.get("parameterDefinitions") or str(act.get("_class","")).endswith("ParametersDefinitionProperty")):
+                return True
+        return False
+
+    def is_multibranch(self, info: dict) -> bool:
+        # org.jenkinsci.plugins.workflow.multibranch.WorkflowMultiBranchProject
+        return (info or {}).get("_class", "").endswith("WorkflowMultiBranchProject")
+
+    def trigger_job_smart(self, job_name: str, params: Optional[dict], branch_for_mbp: Optional[str] = None) -> Optional[str]:
+        """
+        Smart trigger:
+          - If multibranch and branch provided: trigger the child job
+          - If parameterized: use /buildWithParameters (validate required params)
+          - Else: use /build
+        """
+        info = self.get_job_info(job_name)
+        if not info:
+            return None
+        if info.get("disabled"):
+            self.log.error(f"Job {job_name} is disabled.")
+            return None
+
+        # Multibranch: trigger the branch child if provided
+        if self.is_multibranch(info):
+            if not branch_for_mbp:
+                self.log.error(f"{job_name} is a Multibranch Pipeline; please provide a branch to trigger.")
+                return None
+            child_name = f"{job_name}/job/{branch_for_mbp}"
+            base = self.base + job_path(child_name)
+            endpoint = "/buildWithParameters" if params else "/build"
+            self.log.info(f"Triggering MBP child: {child_name} via {endpoint}")
+            r = self.sess.post(base + endpoint, data=params or {}, headers=self._headers(), timeout=30, allow_redirects=False)
+            if r.status_code not in (200, 201, 202):
+                self.log.error(f"Trigger failed {child_name}: {r.status_code}")
+                snippet = (r.text or "")[:500].replace("\n"," ")
+                self.log.error(f"Response snippet: {snippet}")
+                return None
+            return r.headers.get("Location")
+
+        paramized = self.is_parameterized(info)
+        if params and not paramized:
+            self.log.warning(f"Job '{job_name}' is not parameterized. Ignoring params and using /build.")
+            params = None
+
+        endpoint = "/buildWithParameters" if (paramized and params) else "/build"
+        url = self.base + job_path(job_name) + endpoint
+        self.log.info(f"Triggering {job_name} via {endpoint} params={params or {}}")
+        r = self.sess.post(url, data=params or {}, headers=self._headers(), timeout=30, allow_redirects=False)
+        if r.status_code not in (200, 201, 202):
+            self.log.error(f"Trigger failed {job_name}: {r.status_code}")
+            snippet = (r.text or "")[:500].replace("\n"," ")
+            self.log.error(f"Response snippet: {snippet}")
+            return None
+        qurl = r.headers.get("Location")
+        if not qurl:
+            self.log.warning(f"No queue Location header for {job_name}.")
+            return None
+        return qurl
+
+    def queue_to_build_number(self, queue_url: str, timeout_sec: int = 600) -> Optional[int]:
+        start = time.time()
+        while time.time() - start < timeout_sec:
+            r = self.sess.get(queue_url + "api/json", timeout=20)
+            if r.status_code >= 400:
+                time.sleep(2); continue
+            q = r.json()
+            if q.get("cancelled"):
+                self.log.error("Queue item cancelled.")
+                return None
+            exe = q.get("executable")
+            if exe and "number" in exe:
+                return exe["number"]
+            time.sleep(2)
+        self.log.error("Timeout waiting for build number.")
+        return None
+
+    def wait_for_result(self, job_name: str, build_number: int, timeout_sec: int = 3600) -> str:
+        start = time.time()
+        while time.time() - start < timeout_sec:
+            url = self.base + job_path(job_name) + f"/{build_number}/api/json"
+            r = self.sess.get(url, timeout=30)
+            if r.status_code < 400:
+                info = r.json()
+                if not info.get("building", False):
+                    res = info.get("result") or "UNKNOWN"
+                    self.log.info(f"{job_name} #{build_number} -> {res}")
+                    return res
+            time.sleep(3)
+        self.log.error(f"Timeout waiting for {job_name} #{build_number}")
+        return "TIMEOUT"
+
+# =========================
+# AGENT EXECUTION
+# =========================
+def execute_agent(subject: str, body: str, sender: Optional[str] = None):
+    # Sanity checks for env vars
+    missing_env = [k for k in ("JENKINS_BASE_URL","JENKINS_USER","JENKINS_TOKEN") if not os.getenv(k)]
+    if missing_env:
+        raise SystemExit(f"Missing env vars in .env: {', '.join(missing_env)}")
+
+    parsed = parse_email(subject, body, sender)
+    log.info(f"[PARSED] {parsed}")
+    plan = plan_actions(parsed)
+    log.info(f"[PLAN] {plan['action']} | {plan['reason']} | seq={plan['sequence']}")
+
+    # Approval branch
+    if plan["action"] == "ASK_CLARIFICATION":
+        log.warning(f"Clarification needed: {plan['required_info']}")
+        return
+
+    if plan["action"] == "ASK_APPROVAL":
+        if AGENT_FORCE_EXECUTE:
+            log.warning("AGENT_FORCE_EXECUTE=1 set — bypassing approval for this run.")
+            plan["action"] = "EXECUTE"
+        else:
+            if request_terminal_approval(parsed["environment"], parsed["items"]):
+                log.info("Approval granted via terminal. Proceeding with execution.")
+                plan["action"] = "EXECUTE"
+            else:
+                log.warning("Approval denied or not provided. Stopping.")
+                return
+    # EXECUTE
+    env = parsed["environment"]
+    env_map = JOB_NAME_MAP.get(env, {})
+    items = {i["service"]: i["branch"] for i in parsed["items"]}
+
+    jc = JenkinsClient(JENKINS_BASE_URL, JENKINS_USER, JENKINS_TOKEN, log)
+
+    react_requested = "react" in plan["sequence"]
+    react_success: Optional[bool] = None
+    summary: List[str] = []
+
+    for step in plan["sequence"]:
+        job_name = env_map.get(step)
+        if not job_name:
+            msg = f"[SKIP] No mapped job for '{step}' in env '{env}'."
+            log.warning(msg); summary.append(msg); continue
+
+        branch = items.get(step)
+        if not branch:
+            msg = f"[SKIP] No branch provided for '{step}'."
+            log.warning(msg); summary.append(msg); continue
+
+        # Gate Node on React success only if React was requested
+        if step == "node" and react_requested and react_success is not True:
+            msg = "[INFO] Skipping Node: React has not succeeded."
+            log.info(msg); summary.append(msg); continue
+
+        # Branch validation (best-effort)
+        if not jc.validate_branch(job_name, branch):
+            msg = f"[SKIP] Branch '{branch}' not allowed (or config unavailable) for '{job_name}'."
+            log.warning(msg); summary.append(msg); continue
+
+        # Decide parameters: your jobs are not parameterized => usually no params
+        params = {"BRANCH": branch} if PASS_BRANCH_PARAM else None
+
+        if DRY_RUN:
+            msg = f"[DRY-RUN] Would trigger {job_name} params={params or {}}"
+            log.info(msg); summary.append(msg)
+            if step == "react":
+                react_success = True
+            continue
+
+        # Smart trigger (handles non-parameterized & multibranch)
+        qurl = jc.trigger_job_smart(job_name, params=params, branch_for_mbp=None)
+        if not qurl:
+            msg = f"[ERROR] Could not start {job_name}: TRIGGER_FAILED"
+            log.error(msg); summary.append(msg)
+            if step == "react":
+                react_success = False
+            continue
+        bn = jc.queue_to_build_number(qurl)
+        if not bn:
+            msg = f"[ERROR] Queue->build mapping failed for {job_name}"
+            log.error(msg); summary.append(msg)
+            if step == "react":
+                react_success = False
+            continue
+
+        res = jc.wait_for_result(job_name, bn)
+        if step == "react":
+            react_success = (res == "SUCCESS")
+
+        msg = f"[DONE] {step.upper()} -> {job_name} #{bn} = {res}"
+        log.info(msg); summary.append(msg)
+
+        # Rollback hook (future): if step == "node" and res != "SUCCESS": trigger rollback here
+
+    log.info("=== SUMMARY ===")
+    for s in summary:
+        log.info(s)
+
+# =========================
+# DEMO / ENTRYPOINT
+# =========================
+if __name__ == "__main__":
+    # Example email (replace with your live input text)
+    subject = "Deployment request"
+    body = """
+    Hi @BarrelFuel-InfraTeam,
+
+    Could you please help us for deployment for the below branches in Security environment.
+
+    React: BFV3_Sprint6_SECURITY
+    Node:  BFV3_Sprint6_SECURITY
+    JSON:  BFV3_Sprint6_SIT_2
+    """
+
+    # If you have the actual requester email, pass it to enable sender-based approval rules
+    execute_agent(subject, body, sender=None)
