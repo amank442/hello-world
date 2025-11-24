@@ -1,41 +1,86 @@
-// public/runtime-shim.js
-(function () {
-  const CFG = window.RUNTIME_CONFIG || {};
-  const TOKENS = Object.keys(CFG).map(k => [`__${k}__`, CFG[k]]);
+pipeline {
+    agent any
 
-  // Fastest replacement (no loops inside fetch/XHR)
-  function rewrite(str) {
-    if (typeof str !== "string") return str;
-    for (let i = 0; i < TOKENS.length; i++) {
-      const [token, value] = TOKENS[i];
-      if (str.includes(token)) {
-        str = str.replaceAll(token, value);
-      }
+    stages {
+
+        /* -------------------------
+         * REPO 1 CHECKOUT
+         * ------------------------- */
+        stage('Checkout Repo 1') {
+            steps {
+                dir('repo-1') {
+                    checkout([
+                        $class: 'GitSCM',
+                        branches: [[name: '*/main']],    // <-- BRANCH 1
+                        userRemoteConfigs: [[
+                            url: 'https://github.com/org/repo1.git',  // <-- REPO 1
+                            credentialsId: 'git-cred'
+                        ]]
+                    ])
+                }
+            }
+        }
+
+        /* -------------------------
+         * REPO 2 CHECKOUT
+         * ------------------------- */
+        stage('Checkout Repo 2') {
+            steps {
+                dir('repo-2') {
+                    checkout([
+                        $class: 'GitSCM',
+                        branches: [[name: '*/develop']],   // <-- BRANCH 2
+                        userRemoteConfigs: [[
+                            url: 'https://github.com/org/repo2.git',  // <-- REPO 2
+                            credentialsId: 'git-cred'
+                        ]]
+                    ])
+                }
+            }
+        }
+
+        /* -------------------------
+         * REPO 3 CHECKOUT
+         * ------------------------- */
+        stage('Checkout Repo 3') {
+            steps {
+                dir('repo-3') {
+                    checkout([
+                        $class: 'GitSCM',
+                        branches: [[name: '*/feature/api']],  // <-- BRANCH 3
+                        userRemoteConfigs: [[
+                            url: 'https://github.com/org/repo3.git', // <-- REPO 3
+                            credentialsId: 'git-cred'
+                        ]]
+                    ])
+                }
+            }
+        }
+
+        /* -------------------------
+         * EXECUTE SHELL STEP
+         * ------------------------- */
+        stage('Execute Shell') {
+            steps {
+                sh '''
+                echo "=== CURRENT WORKSPACE CONTENT ==="
+                ls -la
+
+                echo "=== Inside repo-1 ==="
+                cd repo-1
+                ls -la
+
+                echo "=== Inside repo-2 ==="
+                cd ../repo-2
+                ls -la
+
+                echo "=== Inside repo-3 ==="
+                cd ../repo-3
+                ls -la
+
+                echo "Shell executed successfully!"
+                '''
+            }
+        }
     }
-    return str;
-  }
-
-  // PATCH FETCH (super lightweight)
-  if (window.fetch) {
-    const nativeFetch = window.fetch;
-    window.fetch = function (input, init) {
-      if (typeof input === "string") input = rewrite(input);
-      else if (input && input.url) input.url = rewrite(input.url);
-      return nativeFetch(input, init);
-    };
-  }
-
-  // PATCH XHR
-  const XHROpen = XMLHttpRequest.prototype.open;
-  XMLHttpRequest.prototype.open = function (m, url) {
-    return XHROpen.call(this, m, rewrite(url), ...[].slice.call(arguments, 2));
-  };
-
-  // PATCH AXIOS (optional but safe)
-  if (window.axios && window.axios.interceptors) {
-    window.axios.interceptors.request.use(function (config) {
-      if (config.url) config.url = rewrite(config.url);
-      return config;
-    });
-  }
-})();
+}
